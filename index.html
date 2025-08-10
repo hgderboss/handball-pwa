@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Handball Statistik</title>
+
+<!-- Safari-Cache verhindern -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
 <style>
     body { 
         font-family: Arial, sans-serif; 
@@ -22,11 +28,11 @@
         height: 60vw;
         max-width: 800px;
         max-height: 800px;
-        background-image: url('logo.png.JPG');
+        background-image: url('logo.png.JPG?v=2'); /* Cache-Busting */
         background-repeat: no-repeat;
         background-position: center center;
         background-size: contain;
-        opacity: 0.15;
+        opacity: 0.25; /* Stärker sichtbar */
         z-index: -1;
         pointer-events: none;
     }
@@ -78,7 +84,7 @@
     .export-buttons { margin-top: 20px; }
     .hidden { display: none; }
     #setup { 
-        background: rgba(255, 255, 255, 0.4); /* Transparenz auf 0.4 geändert */
+        background: rgba(255, 255, 255, 0.4); 
         padding: 20px; 
         border-radius: 10px; 
         max-width: 100%;
@@ -173,8 +179,11 @@
 </div>
 <div id="teamStats"></div>
 
+<!-- Bibliotheken -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
     const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
     const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
@@ -284,8 +293,8 @@
 
         Object.keys(playersData).forEach(num => {
             playerTable += `<tr><td><b>Spieler ${num}</b></td>` +
-                actionsPositive.map(a => `<td>${playersData[num][a]}</td>`).join("") +
-                actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${playersData[num][a]}</td>`).join("") +
+                actionsPositive.map(a => `<td><b>${playersData[num][a]}</b></td>`).join("") +
+                actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'><b>${playersData[num][a]}</b></td>`).join("") +
                 "</tr>";
         });
 
@@ -304,8 +313,8 @@
         Object.values(playersData).forEach(p => Object.keys(p).forEach(a => sums[a] += p[a]));
 
         teamTable += `<tr><td><b>Gesamt</b></td>` +
-            actionsPositive.map(a => `<td>${sums[a]}</td>`).join("") +
-            actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${sums[a]}</td>`).join("") +
+            actionsPositive.map(a => `<td><b>${sums[a]}</b></td>`).join("") +
+            actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'><b>${sums[a]}</b></td>`).join("") +
             "</tr></tbody></table>";
 
         document.getElementById("teamStats").innerHTML = teamTable;
@@ -319,8 +328,15 @@
 
     function exportTableToPDF(tableID) {
         const { jsPDF } = window.jspdf;
-        let doc = new jsPDF();
-        doc.autoTable({ html: `#${tableID}` });
+        let doc = new jsPDF({ orientation: "landscape" });
+        doc.autoTable({
+            html: `#${tableID}`,
+            theme: "grid",
+            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
+            bodyStyles: { fontStyle: "bold" },
+            styles: { halign: "center", cellPadding: 2, fontSize: 10 },
+            tableWidth: "auto"
+        });
         doc.save(`${tableID}.pdf`);
     }
 </script>
