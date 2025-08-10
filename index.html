@@ -3,130 +3,155 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Handball Statistik App</title>
+<title>Statistik vs Gegner</title>
 <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    h1, h2 { text-align: center; }
-    .container { padding: 10px; max-width: 900px; margin: auto; }
-    .player-selection { display: flex; flex-wrap: wrap; gap: 10px; }
-    .player-card { border: 1px solid #ccc; padding: 5px; width: 140px; }
-    .button-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-    button { padding: 5px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
-    .positive { background-color: #c9e6c9; }
-    .negative { background-color: #f5cccc; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    header, .setup { padding: 10px; text-align: center; background: #eee; }
+    h1 { font-size: 1.5em; margin: 0; }
+    .players { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; }
+    .player-card { border: 1px solid #ccc; border-radius: 8px; padding: 5px; min-width: 220px; text-align: center; background: #f9f9f9; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; justify-content: center; }
+    button { flex: 1 1 calc(33% - 5px); min-width: 60px; padding: 10px; font-size: 1em; border-radius: 5px; border: none; cursor: pointer; }
+    .positive { background: #c8e6c9; }
+    .negative { background: #ffcdd2; }
+    .stats { padding: 10px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
-    #start-btn { padding: 10px 20px; font-size: 16px; margin: 20px auto; display: block; }
+    th { background: #f0f0f0; }
 </style>
 </head>
 <body>
 
-<div class="container" id="selection-screen">
-    <h1>Kaderauswahl</h1>
-    <p>Wähle 7–16 Spieler für das Spiel:</p>
-    <div class="player-selection" id="player-selection-list"></div>
-    <button id="start-btn">Spiel starten</button>
+<div class="setup">
+    <label>Gegner: <input type="text" id="opponent"></label>
+    <div id="player-select"></div>
+    <button onclick="startGame()">Start</button>
 </div>
 
-<div class="container" id="game-screen" style="display:none;">
-    <h1>Handball Statistik</h1>
-    <div id="players-area"></div>
-    <h2>Team-Statistik</h2>
-    <div id="team-stats"></div>
-</div>
+<header>
+    <h1 id="headline">Statistik vs ...</h1>
+</header>
+
+<div class="players" id="players"></div>
+
+<div class="stats" id="stats"></div>
 
 <script>
 const allPlayers = Array.from({length: 20}, (_, i) => `Spieler ${i+1}`);
-let gameData = {};
+let selectedPlayers = [];
+let opponentName = "";
+let stats = {};
 
-function createSelectionList() {
-    const list = document.getElementById('player-selection-list');
-    allPlayers.forEach(player => {
-        const div = document.createElement('div');
-        div.classList.add('player-card');
-        div.innerHTML = `<label><input type="checkbox" value="${player}"> ${player}</label>`;
-        list.appendChild(div);
+const positiveActions = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
+const negativeActions = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
+
+function initPlayerSelect() {
+    const container = document.getElementById('player-select');
+    allPlayers.forEach(name => {
+        const label = document.createElement('label');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = name;
+        label.appendChild(cb);
+        label.append(` ${name} `);
+        container.appendChild(label);
     });
 }
+initPlayerSelect();
 
 function startGame() {
-    const selected = Array.from(document.querySelectorAll('#player-selection-list input:checked'))
-        .map(cb => cb.value);
-
-    if (selected.length < 7 || selected.length > 16) {
-        alert('Bitte wähle zwischen 7 und 16 Spielern.');
-        return;
-    }
-
-    document.getElementById('selection-screen').style.display = 'none';
-    document.getElementById('game-screen').style.display = 'block';
-
-    selected.forEach(player => {
-        gameData[player] = {
-            positive: { km: 0, dbr: 0, nah: 0, fern: 0, tgs: 0, siebenm: 0 },
-            negative: { km: 0, dbr: 0, nah: 0, fern: 0, tgs: 0, siebenm: 0, tf: 0 }
-        };
-    });
-
-    renderPlayers(selected);
-    updateTeamStats();
+    opponentName = document.getElementById('opponent').value || "Unbekannt";
+    selectedPlayers = Array.from(document.querySelectorAll('#player-select input:checked')).map(cb => cb.value);
+    document.getElementById('headline').textContent = `Statistik vs ${opponentName}`;
+    initStats();
+    renderPlayers();
+    renderStats();
 }
 
-function renderPlayers(players) {
-    const area = document.getElementById('players-area');
-    area.innerHTML = '';
-    players.forEach(player => {
-        const div = document.createElement('div');
-        div.classList.add('player-card');
-        div.innerHTML = `<h3>${player}</h3>
-            <div class="button-row">
-                ${createButtons(player, 'positive', ['km','dbr','nah','fern','tgs','siebenm'], 'positive')}
-            </div>
-            <div class="button-row">
-                ${createButtons(player, 'negative', ['km','dbr','nah','fern','tgs','siebenm','tf'], 'negative')}
-            </div>
-            <div id="stats-${player}"></div>`;
-        area.appendChild(div);
+function initStats() {
+    stats = {};
+    selectedPlayers.forEach(player => {
+        stats[player] = {};
+        [...positiveActions, ...negativeActions].forEach(a => stats[player][a] = 0);
     });
 }
 
-function createButtons(player, type, actions, cssClass) {
-    return actions.map(act => {
-        return `<button class="${cssClass}" id="${player}-${type}-${act}" onclick="increment('${player}','${type}','${act}')">${act.toUpperCase()} (0)</button>`;
-    }).join('');
+function renderPlayers() {
+    const container = document.getElementById('players');
+    container.innerHTML = '';
+    selectedPlayers.forEach(player => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        const name = document.createElement('div');
+        name.textContent = player;
+        card.appendChild(name);
+
+        const posRow = document.createElement('div');
+        posRow.className = 'button-row';
+        positiveActions.forEach(action => {
+            const btn = createButton(player, action, 'positive');
+            posRow.appendChild(btn);
+        });
+        card.appendChild(posRow);
+
+        const negRow = document.createElement('div');
+        negRow.className = 'button-row';
+        negativeActions.forEach(action => {
+            const btn = createButton(player, action, 'negative');
+            negRow.appendChild(btn);
+        });
+        card.appendChild(negRow);
+
+        container.appendChild(card);
+    });
 }
 
-function increment(player, type, action) {
-    gameData[player][type][action]++;
-    document.getElementById(`${player}-${type}-${action}`).innerText = `${action.toUpperCase()} (${gameData[player][type][action]})`;
-    updateTeamStats();
+function createButton(player, action, type) {
+    const btn = document.createElement('button');
+    btn.className = type;
+    updateButtonLabel(btn, action, stats[player][action]);
+    btn.addEventListener('click', () => {
+        stats[player][action]++;
+        updateButtonLabel(btn, action, stats[player][action]);
+        renderStats();
+    });
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+    btn.addEventListener('touchstart', e => {
+        btn.longPressTimeout = setTimeout(() => {
+            if (stats[player][action] > 0) stats[player][action]--;
+            updateButtonLabel(btn, action, stats[player][action]);
+            renderStats();
+        }, 600);
+    });
+    btn.addEventListener('touchend', e => clearTimeout(btn.longPressTimeout));
+    return btn;
 }
 
-function updateTeamStats() {
-    const teamStats = { positive: 0, negative: 0, negativeInclTF: 0 };
-    let table = `<table><tr><th>Spieler</th><th>Positiv</th><th>Negativ</th><th>Wurfquote</th><th>Wurfquote inkl. TF</th></tr>`;
-    for (const player in gameData) {
-        const pos = Object.values(gameData[player].positive).reduce((a,b) => a+b, 0);
-        const negNoTF = Object.entries(gameData[player].negative).filter(([k]) => k !== 'tf').reduce((a,[,b]) => a+b, 0);
-        const negInclTF = Object.values(gameData[player].negative).reduce((a,b) => a+b, 0);
-        const q1 = pos + negNoTF > 0 ? (pos / (pos + negNoTF) * 100).toFixed(1) + '%' : '-';
-        const q2 = pos + negInclTF > 0 ? (pos / (pos + negInclTF) * 100).toFixed(1) + '%' : '-';
-        table += `<tr><td>${player}</td><td>${pos}</td><td>${negNoTF}</td><td>${q1}</td><td>${q2}</td></tr>`;
-        teamStats.positive += pos;
-        teamStats.negative += negNoTF;
-        teamStats.negativeInclTF += negInclTF;
-    }
-    const tq1 = teamStats.positive + teamStats.negative > 0 ? (teamStats.positive / (teamStats.positive + teamStats.negative) * 100).toFixed(1) + '%' : '-';
-    const tq2 = teamStats.positive + teamStats.negativeInclTF > 0 ? (teamStats.positive / (teamStats.positive + teamStats.negativeInclTF) * 100).toFixed(1) + '%' : '-';
-    table += `<tr><th>Team</th><th>${teamStats.positive}</th><th>${teamStats.negative}</th><th>${tq1}</th><th>${tq2}</th></tr>`;
-    table += `</table>`;
-    document.getElementById('team-stats').innerHTML = table;
+function updateButtonLabel(btn, action, count) {
+    btn.textContent = `${action} (${count})`;
 }
 
-document.getElementById('start-btn').addEventListener('click', startGame);
+function renderStats() {
+    const statsDiv = document.getElementById('stats');
+    let html = `<h2>Spieler-Statistik</h2><table><tr><th>Spieler</th>`;
+    [...positiveActions, ...negativeActions].forEach(a => html += `<th>${a}</th>`);
+    html += `</tr>`;
+    selectedPlayers.forEach(player => {
+        html += `<tr><td>${player}</td>`;
+        [...positiveActions, ...negativeActions].forEach(a => html += `<td>${stats[player][a]}</td>`);
+        html += `</tr>`;
+    });
+    html += `</table>`;
 
-createSelectionList();
+    html += `<h2>Team-Statistik</h2><table><tr><th>Aktion</th><th>Summe</th></tr>`;
+    [...positiveActions, ...negativeActions].forEach(a => {
+        let sum = selectedPlayers.reduce((acc, p) => acc + stats[p][a], 0);
+        html += `<tr><td>${a}</td><td>${sum}</td></tr>`;
+    });
+    html += `</table>`;
+
+    statsDiv.innerHTML = html;
+}
 </script>
-
 </body>
 </html>
