@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Handball Statistik</title>
 
-<!-- Browser-Cache verhindern -->
+<!-- Cache komplett verhindern -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
@@ -15,9 +15,9 @@
         font-family: Arial, sans-serif; 
         margin: 0;
         position: relative;
-        background-color: white;
+        background-color: #f5f5f5;
     }
-    /* Wasserzeichen-Logo im Hintergrund */
+    /* Wasserzeichen im Hintergrund */
     body::before {
         content: "";
         position: fixed;
@@ -31,19 +31,88 @@
         background-repeat: no-repeat;
         background-position: center center;
         background-size: contain;
-        opacity: 0.25;
+        opacity: 0.15;
+        filter: blur(1px);
         z-index: -1;
         pointer-events: none;
     }
-    h1, h2 { text-align: center; }
+    h1, h2 { text-align: center; margin-bottom: 15px; }
+    /* Setup-Container */
+    #setup { 
+        background: white; 
+        padding: 20px; 
+        border-radius: 12px; 
+        max-width: 500px;
+        margin: 30px auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    #opponent { 
+        font-size: 1.1em; 
+        padding: 12px; 
+        width: 100%; 
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+    }
+    #opponent:focus {
+        outline: none;
+        border-color: #009688;
+        box-shadow: 0 0 5px rgba(0,150,136,0.5);
+    }
+    /* Checkbox-Container */
+    #player-selection { 
+        display: flex; 
+        flex-wrap: nowrap; 
+        justify-content: space-between;
+        gap: 10px;
+    }
+    #player-selection .column {
+        width: 48%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    #player-selection label { 
+        background: #fafafa;
+        border: 1px solid #ddd;
+        padding: 8px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s;
+        font-size: 1em;
+    }
+    #player-selection label:hover {
+        background: #e0f2f1;
+    }
+    button.start-btn {
+        font-size: 1.3em; 
+        padding: 12px 15px; 
+        background: linear-gradient(90deg, #009688, #26a69a); 
+        color: white; 
+        border: none; 
+        border-radius: 8px; 
+        cursor: pointer;
+        width: 100%;
+        margin-top: 20px;
+        transition: background 0.3s, transform 0.1s;
+    }
+    button.start-btn:hover {
+        background: linear-gradient(90deg, #00796b, #26a69a);
+    }
+    button.start-btn:active {
+        transform: scale(0.98);
+    }
+    /* Spieler-Card */
     .player-card { 
-        border: 1px solid #ccc; 
         border-radius: 8px; 
         padding: 10px; 
         margin: 10px; 
         flex: 1; 
         min-width: 250px; 
-        background: rgba(255, 255, 255, 0.9);
+        background: white;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.05);
     }
     .player-name { 
         font-weight: bold; 
@@ -56,6 +125,7 @@
         flex-wrap: wrap; 
         gap: 10px; 
         justify-content: center; 
+        padding: 10px;
     }
     .btn { 
         width: 48%; 
@@ -64,7 +134,7 @@
         border: none; 
         cursor: pointer; 
         font-size: 1em; 
-        border-radius: 5px; 
+        border-radius: 6px; 
         user-select: none;
     }
     .positive { background-color: #d4edda; }
@@ -80,51 +150,8 @@
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     th { background: #f0f0f0; }
     .thick-separator { border-left: 3px solid black; }
-    .export-buttons { margin-top: 20px; }
+    .export-buttons { margin-top: 20px; text-align: center; }
     .hidden { display: none; }
-    #setup { 
-        background: rgba(255, 255, 255, 0.4); 
-        padding: 20px; 
-        border-radius: 10px; 
-        max-width: 100%;
-        width: 100%;
-        min-height: 100vh;
-        box-sizing: border-box;
-    }
-    #opponent { 
-        font-size: 1.2em; 
-        padding: 8px; 
-        width: 100%; 
-        margin-bottom: 15px;
-    }
-    #player-selection { 
-        display: flex; 
-        flex-wrap: nowrap; 
-        justify-content: space-between;
-    }
-    #player-selection .column {
-        width: 48%;
-        display: flex;
-        flex-direction: column;
-    }
-    #player-selection label { 
-        font-size: 1em; 
-        margin-bottom: 5px;
-    }
-    button.start-btn {
-        font-size: 1.3em; 
-        padding: 10px 15px; 
-        background-color: #009688; 
-        color: white; 
-        border: none; 
-        border-radius: 8px; 
-        cursor: pointer;
-        width: 100%;
-        margin-top: 20px;
-    }
-    button.start-btn:hover {
-        background-color: #00796b;
-    }
     @media (max-width: 768px) {
         .btn { 
             width: 100%; 
@@ -152,12 +179,10 @@
 <div id="setup">
     <h1>Willkommen!</h1>
     <input type="text" id="opponent" placeholder="Gegner eingeben">
-    <br><br>
     <div id="player-selection">
         <div class="column" id="col1"></div>
         <div class="column" id="col2"></div>
     </div>
-    <br>
     <button class="start-btn" onclick="validateAndStart()">Start</button>
 </div>
 
@@ -176,29 +201,26 @@
 </div>
 <div id="teamStats"></div>
 
-<!-- Bibliotheken ohne PHP-Syntax, aber mit Cache-Busting -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?cb=12345"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js?cb=12345"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?cb=12345"></script>
-
+<!-- Bibliotheken mit Cache-Busting -->
 <script>
-    // Wasserzeichen mit Cache-Busting setzen
-    document.body.style.setProperty(
-        "--logo-url", 
-        `url('logo.png.JPG?cb=${Date.now()}')`
-    );
-    document.querySelector("body::before");
-
-    document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${Date.now()}')`;
-
-    const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
-    const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
-    let playersData = {};
-    let pressTimer;
-    let longPressActive = false;
-    let activeTouch = false;
+    const cb = Date.now();
+    const libs = [
+        `https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?cb=${cb}`,
+        `https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js?cb=${cb}`,
+        `https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?cb=${cb}`
+    ];
+    libs.forEach(src => {
+        const s = document.createElement("script");
+        s.src = src;
+        document.head.appendChild(s);
+    });
 
     window.addEventListener("load", () => {
+        // Wasserzeichen setzen
+        document.body.style.setProperty("--logo-url", `url('logo.png.JPG?cb=${cb}')`);
+        document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
+
+        // Spieler-Checkboxen
         const col1 = document.getElementById("col1");
         const col2 = document.getElementById("col2");
         for (let i = 1; i <= 10; i++) {
@@ -208,6 +230,13 @@
             col2.innerHTML += `<label><input type='checkbox' value='${i}'> Spieler ${i}</label>`;
         }
     });
+
+    const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
+    const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
+    let playersData = {};
+    let pressTimer;
+    let longPressActive = false;
+    let activeTouch = false;
 
     function validateAndStart() {
         const opponent = document.getElementById("opponent").value.trim();
