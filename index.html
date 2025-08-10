@@ -78,7 +78,7 @@
     .export-buttons { margin-top: 20px; }
     .hidden { display: none; }
     #setup { 
-        background: rgba(255, 255, 255, 0.95); 
+        background: rgba(255, 255, 255, 0.85); /* leicht transparent für Hintergrundsichtbarkeit */
         padding: 20px; 
         border-radius: 10px; 
         max-width: 100%;
@@ -223,7 +223,7 @@
                 if (a === "TF" && idx >= actionsPositive.length) btn.classList.add("full-width");
                 btn.innerText = `${a} (0)`;
 
-                btn.addEventListener("mousedown", () => {
+                const startPress = () => {
                     longPressActive = false;
                     pressTimer = setTimeout(() => {
                         playersData[num][a] = Math.max(0, playersData[num][a] - 1);
@@ -231,18 +231,25 @@
                         updateTables();
                         longPressActive = true;
                     }, 500);
-                });
+                };
 
-                btn.addEventListener("mouseup", () => {
+                const endPress = () => {
                     clearTimeout(pressTimer);
                     if (!longPressActive) {
                         playersData[num][a]++;
                         btn.innerText = `${a} (${playersData[num][a]})`;
                         updateTables();
                     }
-                });
+                };
 
+                btn.addEventListener("mousedown", startPress);
+                btn.addEventListener("mouseup", endPress);
                 btn.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
+                // Touch-Events für Smartphones/Tablets
+                btn.addEventListener("touchstart", startPress);
+                btn.addEventListener("touchend", endPress);
+                btn.addEventListener("touchcancel", () => clearTimeout(pressTimer));
 
                 card.appendChild(btn);
 
