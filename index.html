@@ -11,20 +11,20 @@
         position: relative;
         background-color: white;
     }
-    /* Wasserzeichen-Logo auf allen Seiten */
+    /* Wasserzeichen-Logo im Hintergrund */
     body::before {
         content: "";
         position: fixed;
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        width: 40vw;
+        width: 60vw; /* Größer */
         height: auto;
         background-image: url('logo.png.JPG');
         background-repeat: no-repeat;
         background-position: center center;
         background-size: contain;
-        opacity: 0.08;
+        opacity: 0.15; /* Klarer sichtbar */
         z-index: -1;
         pointer-events: none;
     }
@@ -44,27 +44,37 @@
         text-align: center; 
         margin-bottom: 10px; 
     }
-    .grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .grid { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 10px; 
+        justify-content: center; 
+    }
     .btn { 
         width: 48%; 
-        padding: 15px; 
+        padding: 12px; 
         margin: 2px 1%; 
         border: none; 
         cursor: pointer; 
-        font-size: 1.1em; 
+        font-size: 1em; 
         border-radius: 5px; 
         user-select: none;
     }
     .positive { background-color: #d4edda; }
     .negative { background-color: #f8d7da; }
     .btn.full-width { width: 98%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-top: 20px; 
+        background-color: white; 
+        font-size: 0.9em;
+    }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     th { background: #f0f0f0; }
     .thick-separator { border-left: 3px solid black; }
     .export-buttons { margin-top: 20px; }
     .hidden { display: none; }
-    /* Erste Seite voller weißer Hintergrund */
     #setup { 
         background: rgba(255, 255, 255, 0.95); 
         padding: 20px; 
@@ -75,7 +85,7 @@
         box-sizing: border-box;
     }
     #opponent { 
-        font-size: 1.3em; 
+        font-size: 1.2em; 
         padding: 8px; 
         width: 100%; 
         margin-bottom: 15px;
@@ -88,13 +98,13 @@
     #player-selection label { 
         display: inline-block; 
         width: 48%; 
-        font-size: 1.2em; 
+        font-size: 1em; 
         margin-bottom: 5px;
     }
     button.start-btn {
-        font-size: 1.4em; 
-        padding: 12px 20px; 
-        background-color: #009688; /* zum Logo passender Farbton */
+        font-size: 1.3em; 
+        padding: 10px 15px; 
+        background-color: #009688; 
         color: white; 
         border: none; 
         border-radius: 8px; 
@@ -105,13 +115,31 @@
     button.start-btn:hover {
         background-color: #00796b;
     }
+    @media (max-width: 768px) {
+        .btn { 
+            width: 100%; 
+            font-size: 0.95em;
+            padding: 10px;
+        }
+        .player-card {
+            min-width: unset;
+            width: 100%;
+        }
+        #player-selection label { 
+            width: 100%; 
+            font-size: 1em;
+        }
+        table {
+            font-size: 0.8em;
+        }
+    }
 </style>
 </head>
 <body>
 
 <div id="setup">
-    <h1>Willkommen!</h1>
-    <input type="text" id="opponent" placeholder="Gegner eingeben">
+    Gegner: <input type="text" id="opponent" placeholder="Gegner eingeben">
+    <br><br>
     <div id="player-selection">
         <label><input type="checkbox" value="1"> Spieler 1</label>
         <label><input type="checkbox" value="2"> Spieler 2</label>
@@ -134,64 +162,33 @@
         <label><input type="checkbox" value="19"> Spieler 19</label>
         <label><input type="checkbox" value="20"> Spieler 20</label>
     </div>
+    <br>
     <button class="start-btn" onclick="start()">Start</button>
 </div>
 
 <h1 id="headline" class="hidden"></h1>
 <div id="players" class="grid"></div>
 
-<div id="statsSection" class="hidden">
-    <h2>Spieler-Statistik</h2>
-    <div class="export-buttons">
-        <button onclick="exportTableToExcel('playerTable')">Export Excel</button>
-        <button onclick="exportTableToPDF('playerTable')">Export PDF</button>
-    </div>
-    <div id="playerStats"></div>
-
-    <h2>Team-Statistik</h2>
-    <div class="export-buttons">
-        <button onclick="exportTableToExcel('teamTable')">Export Excel</button>
-        <button onclick="exportTableToPDF('teamTable')">Export PDF</button>
-    </div>
-    <div id="teamStats"></div>
+<h2>Spieler-Statistik</h2>
+<div class="export-buttons">
+    <button onclick="exportTableToExcel('playerTable')">Export Excel</button>
+    <button onclick="exportTableToPDF('playerTable')">Export PDF</button>
 </div>
+<div id="playerStats"></div>
+
+<h2>Team-Statistik</h2>
+<div class="export-buttons">
+    <button onclick="exportTableToExcel('teamTable')">Export Excel</button>
+    <button onclick="exportTableToPDF('teamTable')">Export PDF</button>
+</div>
+<div id="teamStats"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script>
     const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
     const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
     let playersData = {};
-
-    function createButton(player, action, type, fullWidth = false) {
-        const btn = document.createElement("button");
-        btn.className = `btn ${type} ${fullWidth ? 'full-width' : ''}`;
-        btn.innerText = `${action} (0)`;
-
-        let holdTimeout;
-        btn.onmousedown = () => {
-            holdTimeout = setTimeout(() => {
-                playersData[player][action] = Math.max(0, playersData[player][action] - 1);
-                btn.innerText = `${action} (${playersData[player][action]})`;
-                updateTables();
-            }, 500);
-        };
-        btn.onmouseup = () => {
-            if (holdTimeout) {
-                clearTimeout(holdTimeout);
-                if (Date.now() - lastClickTime < 500) {
-                    playersData[player][action]++;
-                    btn.innerText = `${action} (${playersData[player][action]})`;
-                    updateTables();
-                }
-            }
-        };
-        let lastClickTime = Date.now();
-        btn.addEventListener("mousedown", () => lastClickTime = Date.now());
-
-        return btn;
-    }
 
     function start() {
         const opponent = document.getElementById("opponent").value;
@@ -201,7 +198,6 @@
         document.getElementById("setup").classList.add("hidden");
         document.getElementById("headline").classList.remove("hidden");
         document.getElementById("headline").innerText = `Statistik vs ${opponent}`;
-        document.getElementById("statsSection").classList.remove("hidden");
 
         const playersDiv = document.getElementById("players");
         playersDiv.innerHTML = "";
@@ -214,13 +210,27 @@
             card.className = "player-card";
             card.innerHTML = `<div class="player-name">Spieler ${num}</div>`;
 
-            actionsPositive.forEach(a => card.appendChild(createButton(num, a, 'positive')));
-            const sep = document.createElement("div");
-            sep.style.borderBottom = "3px solid black";
-            sep.style.margin = "5px 0";
-            card.appendChild(sep);
-            actionsNegative.slice(0, -1).forEach(a => card.appendChild(createButton(num, a, 'negative')));
-            card.appendChild(createButton(num, "TF", 'negative', true));
+            [...actionsPositive, ...actionsNegative].forEach((a, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "btn " + (idx < actionsPositive.length ? "positive" : "negative");
+                if (a === "TF" && idx >= actionsPositive.length) {
+                    btn.classList.add("full-width");
+                }
+                btn.innerText = `${a} (0)`;
+                btn.onmousedown = (e) => {
+                    if (e.buttons === 1) { playersData[num][a]++; }
+                    if (e.buttons === 2) { playersData[num][a] = Math.max(0, playersData[num][a] - 1); }
+                    btn.innerText = `${a} (${playersData[num][a]})`;
+                    updateTables();
+                };
+                card.appendChild(btn);
+                if (idx === actionsPositive.length - 1) {
+                    const sep = document.createElement("div");
+                    sep.style.borderBottom = "3px solid black";
+                    sep.style.margin = "5px 0";
+                    card.appendChild(sep);
+                }
+            });
 
             playersDiv.appendChild(card);
         });
@@ -252,17 +262,11 @@
             Object.keys(data).forEach(a => teamSums[a] += data[a]);
         });
 
-        let teamTable = "<table id='teamTable'><thead><tr><th rowspan='2'>Spieler</th>" +
-            `<th colspan='${actionsPositive.length}'>Positive Aktionen</th>` +
-            `<th colspan='${actionsNegative.length}'>Negative Aktionen</th></tr><tr>` +
-            actionsPositive.map(a => `<th>${a}</th>`).join("") +
-            actionsNegative.map((a,i) => `<th class='${i===0 ? "thick-separator" : ""}'>${a}</th>`).join("") +
-            "</tr></thead><tbody>";
-
-        teamTable += `<tr><td><b>Team</b></td>` +
-            actionsPositive.map(a => `<td>${teamSums[a]}</td>`).join("") +
-            actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${teamSums[a]}</td>`).join("") +
-            "</tr></tbody></table>";
+        let teamTable = "<table id='teamTable'><thead><tr><th rowspan='2'>Aktion</th><th rowspan='2'>Summe</th></tr></thead><tbody>";
+        actionsPositive.forEach(a => teamTable += `<tr><td>${a}</td><td>${teamSums[a]}</td></tr>`);
+        teamTable += `<tr><td colspan='2' style='border-top: 3px solid black;'></td></tr>`;
+        actionsNegative.forEach(a => teamTable += `<tr><td>${a}</td><td>${teamSums[a]}</td></tr>`);
+        teamTable += "</tbody></table>";
 
         document.getElementById("teamStats").innerHTML = teamTable;
     }
