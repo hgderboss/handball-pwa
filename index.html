@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Handball Statistik</title>
 
-<!-- Safari-Cache noch stärker verhindern -->
+<!-- Browser-Cache verhindern -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
@@ -28,7 +28,6 @@
         height: 60vw;
         max-width: 800px;
         max-height: 800px;
-        background-image: url('logo.png.JPG?v=' + new Date().getTime()); /* Cache-Busting */
         background-repeat: no-repeat;
         background-position: center center;
         background-size: contain;
@@ -177,12 +176,21 @@
 </div>
 <div id="teamStats"></div>
 
-<!-- Bibliotheken mit Cache-Busting -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=<?=Date.now()?>"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js?v=<?=Date.now()?>"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?v=<?=Date.now()?>"></script>
+<!-- Bibliotheken ohne PHP-Syntax, aber mit Cache-Busting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?cb=12345"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js?cb=12345"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?cb=12345"></script>
 
 <script>
+    // Wasserzeichen mit Cache-Busting setzen
+    document.body.style.setProperty(
+        "--logo-url", 
+        `url('logo.png.JPG?cb=${Date.now()}')`
+    );
+    document.querySelector("body::before");
+
+    document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${Date.now()}')`;
+
     const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
     const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
     let playersData = {};
@@ -190,7 +198,6 @@
     let longPressActive = false;
     let activeTouch = false;
 
-    // Spieler in zwei Spalten einfügen
     window.addEventListener("load", () => {
         const col1 = document.getElementById("col1");
         const col2 = document.getElementById("col2");
@@ -346,26 +353,10 @@
         doc.setFont(undefined, "bold");
         doc.text(document.getElementById("headline").innerText, 14, 15);
 
-        // Tabellen-Daten mit Trennstrich-Logik erzeugen
-        let tableElement = document.getElementById(tableID);
-        let bodyData = [];
-        tableElement.querySelectorAll("tbody tr").forEach(row => {
-            let rowData = [];
-            row.querySelectorAll("td").forEach((cell, index) => {
-                if (cell.classList.contains("thick-separator")) {
-                    rowData.push({ content: cell.innerText, styles: { cellWidth: 'auto', lineWidth: 0.5, lineColor: [0, 0, 0], halign: 'center' } });
-                } else {
-                    rowData.push(cell.innerText);
-                }
-            });
-            bodyData.push(rowData);
-        });
-
         doc.autoTable({
             html: `#${tableID}`,
             theme: "grid",
             headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
-            body: bodyData,
             styles: { halign: "center", cellPadding: 2, fontSize: 10 },
             startY: 20
         });
