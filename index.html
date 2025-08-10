@@ -15,83 +15,77 @@
         font-family: Arial, sans-serif; 
         margin: 0;
         position: relative;
-        background-color: #ffffff;
-        background-image: url('logo.png.JPG');
+        background-color: #ffffff; /* Rein weißer Hintergrund */
+    }
+    /* Wasserzeichen im Hintergrund */
+    body::before {
+        content: "";
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 60vw;
+        height: 60vw;
+        max-width: 800px;
+        max-height: 800px;
         background-repeat: no-repeat;
-        background-position: center;
-        background-size: 50%;
-        background-attachment: fixed;
+        background-position: center center;
+        background-size: contain;
+        opacity: 0.15;
+        filter: blur(1px);
+        z-index: -1;
+        pointer-events: none;
     }
     h1, h2 { text-align: center; margin-bottom: 15px; }
-
-    /* Setup-Container Vollbild + Transparent */
+    /* Setup-Container */
     #setup { 
-        background: rgba(255,255,255,0.7); 
+        background: rgba(255, 255, 255, 0.75); /* Transparenter Hintergrund */
         padding: 20px; 
         border-radius: 12px; 
-        width: 100%;
-        height: 100vh;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        overflow-y: auto;
-    }
-    #setup-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        margin-top: 20px;
-    }
-    /* Logo im Setup entfernen */
-    #setup-header img {
-        display: none;
+        max-width: 500px;
+        margin: 30px auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     #opponent { 
         font-size: 1.1em; 
         padding: 12px; 
-        width: 80%; 
-        margin: 20px 0;
+        width: 100%; 
+        margin-bottom: 20px;
         border: 1px solid #ccc;
         border-radius: 8px;
         box-sizing: border-box;
         transition: border-color 0.3s;
+        background-color: rgba(255,255,255,0.85);
     }
     #opponent:focus {
         outline: none;
         border-color: #009688;
         box-shadow: 0 0 5px rgba(0,150,136,0.5);
     }
-    /* Checkbox-Container Vollbreite */
+    /* Checkbox-Container */
     #player-selection { 
         display: flex; 
         flex-wrap: nowrap; 
-        justify-content: center;
-        gap: 30px;
-        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
     }
     #player-selection .column {
-        flex: 1;
+        width: 48%;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        align-items: center;
     }
     #player-selection label { 
-        background: rgba(250,250,250,0.9);
+        background: rgba(250, 250, 250, 0.6); /* Transparente Labels */
         border: 1px solid #ddd;
         padding: 8px 10px;
         border-radius: 6px;
         cursor: pointer;
         transition: background 0.3s;
         font-size: 1em;
-        width: 80%;
-        text-align: center;
     }
     #player-selection label:hover {
-        background: rgba(224,242,241,0.9);
+        background: rgba(224, 242, 241, 0.7);
     }
     button.start-btn {
         font-size: 1.3em; 
@@ -101,7 +95,7 @@
         border: none; 
         border-radius: 8px; 
         cursor: pointer;
-        width: 80%;
+        width: 100%;
         margin-top: 20px;
         transition: background 0.3s, transform 0.1s;
     }
@@ -156,17 +150,10 @@
     }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     th { background: #f0f0f0; }
-    .thick-separator { border-left: 3px solid black !important; }
+    .thick-separator { border-left: 3px solid black; }
     .export-buttons { margin-top: 20px; text-align: center; }
     .hidden { display: none; }
     @media (max-width: 768px) {
-        #player-selection {
-            flex-direction: column;
-            align-items: center;
-        }
-        #player-selection .column {
-            width: 100%;
-        }
         .btn { 
             width: 100%; 
             font-size: 0.95em;
@@ -174,6 +161,12 @@
         }
         .player-card {
             min-width: unset;
+            width: 100%;
+        }
+        #player-selection {
+            flex-direction: column;
+        }
+        #player-selection .column {
             width: 100%;
         }
         table {
@@ -185,9 +178,7 @@
 <body>
 
 <div id="setup">
-    <div id="setup-header">
-        <h1>Willkommen!</h1>
-    </div>
+    <h1>Willkommen!</h1>
     <input type="text" id="opponent" placeholder="Gegner eingeben">
     <div id="player-selection">
         <div class="column" id="col1"></div>
@@ -211,20 +202,20 @@
 </div>
 <div id="teamStats"></div>
 
+<!-- Bibliotheken zuerst laden -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
     const cb = Date.now();
-    const libs = [
-        `https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?cb=${cb}`,
-        `https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js?cb=${cb}`,
-        `https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?cb=${cb}`
-    ];
-    libs.forEach(src => {
-        const s = document.createElement("script");
-        s.src = src;
-        document.head.appendChild(s);
-    });
 
     window.addEventListener("load", () => {
+        // Wasserzeichen setzen
+        document.body.style.setProperty("--logo-url", `url('logo.png.JPG?cb=${cb}')`);
+        document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
+
+        // Spieler-Checkboxen
         const col1 = document.getElementById("col1");
         const col2 = document.getElementById("col2");
         for (let i = 1; i <= 10; i++) {
@@ -374,50 +365,29 @@
     }
 
     function exportTableToExcel(tableID) {
-        if (typeof XLSX === "undefined") {
-            alert("Excel-Bibliothek noch nicht geladen!");
-            return;
-        }
-        let table = document.getElementById(tableID).cloneNode(true);
-        table.querySelectorAll(".thick-separator").forEach(cell => {
-            cell.style.borderLeft = "3px solid black";
-        });
-        let wb = XLSX.utils.book_new();
-        let ws = XLSX.utils.table_to_sheet(table);
-        wb.SheetNames.push("Statistik");
-        wb.Sheets["Statistik"] = ws;
+        let table = document.getElementById(tableID);
+        let wb = XLSX.utils.table_to_book(table, {sheet:"Sheet 1"});
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
 
     function exportTableToPDF(tableID) {
-        if (typeof window.jspdf === "undefined" || typeof window.jspdf.jsPDF === "undefined") {
-            alert("PDF-Bibliothek noch nicht geladen!");
-            return;
-        }
         const { jsPDF } = window.jspdf;
-        let doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+        let doc = new jsPDF({ orientation: "landscape" });
         doc.setFontSize(16);
         doc.setFont(undefined, "bold");
         doc.text(document.getElementById("headline").innerText, 14, 15);
 
-        if (typeof doc.autoTable === "undefined") {
-            alert("AutoTable-Plugin noch nicht geladen!");
-            return;
+        if (doc.autoTable) {
+            doc.autoTable({
+                html: `#${tableID}`,
+                theme: "grid",
+                headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
+                styles: { halign: "center", cellPadding: 2, fontSize: 10 },
+                startY: 20
+            });
+        } else {
+            alert("PDF-Export-Bibliothek konnte nicht geladen werden.");
         }
-
-        doc.autoTable({
-            html: `#${tableID}`,
-            theme: "grid",
-            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
-            styles: { halign: "center", cellPadding: 2, fontSize: 10 },
-            startY: 20,
-            didParseCell: function(data) {
-                if (data.cell.raw && data.cell.raw.classList && data.cell.raw.classList.contains('thick-separator')) {
-                    data.cell.styles.lineWidth = { left: 0.75 };
-                    data.cell.styles.lineColor = { left: [0, 0, 0] };
-                }
-            }
-        });
         doc.save(`${tableID}.pdf`);
     }
 </script>
