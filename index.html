@@ -19,8 +19,10 @@
         top: 50%;
         transform: translate(-50%, -50%);
         width: 60vw;
-        height: auto;
-        background-image: url('logo.png.JPG?v=' + Date.now()); /* Dynamischer Zeitstempel */
+        height: 60vw;
+        max-width: 800px;
+        max-height: 800px;
+        background-image: url('logo.png.JPG');
         background-repeat: no-repeat;
         background-position: center center;
         background-size: contain;
@@ -141,7 +143,6 @@
     Gegner: <input type="text" id="opponent" placeholder="Gegner eingeben">
     <br><br>
     <div id="player-selection">
-        <!-- Spieler-Checkboxen -->
         <script>
             document.write(
                 Array.from({length: 20}, (_, i) => 
@@ -151,7 +152,7 @@
         </script>
     </div>
     <br>
-    <button class="start-btn" onclick="start()">Start</button>
+    <button class="start-btn" onclick="validateAndStart()">Start</button>
 </div>
 
 <h1 id="headline" class="hidden"></h1>
@@ -171,13 +172,28 @@
 </div>
 <div id="teamStats"></div>
 
-<!-- Skripte mit Zeitstempel -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=<?php echo time(); ?>"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?v=<?php echo time(); ?>"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
     const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
     let playersData = {};
+    let longPressTimer;
+
+    function validateAndStart() {
+        const opponent = document.getElementById("opponent").value.trim();
+        const selectedPlayers = Array.from(document.querySelectorAll("#player-selection input:checked"));
+
+        let errors = [];
+        if (opponent.length < 3) errors.push("Gegnername (mindestens 3 Buchstaben)");
+        if (selectedPlayers.length < 7) errors.push("Mindestens 7 Spieler auswählen");
+
+        if (errors.length > 0) {
+            alert("Bitte korrigieren:\n- " + errors.join("\n- "));
+            return;
+        }
+        start();
+    }
 
     function start() {
         const opponent = document.getElementById("opponent").value;
@@ -202,17 +218,30 @@
             [...actionsPositive, ...actionsNegative].forEach((a, idx) => {
                 const btn = document.createElement("button");
                 btn.className = "btn " + (idx < actionsPositive.length ? "positive" : "negative");
-                if (a === "TF" && idx >= actionsPositive.length) {
-                    btn.classList.add("full-width");
-                }
+                if (a === "TF" && idx >= actionsPositive.length) btn.classList.add("full-width");
                 btn.innerText = `${a} (0)`;
-                btn.onmousedown = (e) => {
-                    if (e.buttons === 1) { playersData[num][a]++; }
-                    if (e.buttons === 2) { playersData[num][a] = Math.max(0, playersData[num][a] - 1); }
-                    btn.innerText = `${a} (${playersData[num][a]})`;
-                    updateTables();
+
+                btn.onmousedown = () => {
+                    longPressTimer = setTimeout(() => {
+                        playersData[num][a] = Math.max(0, playersData[num][a] - 1);
+                        btn.innerText = `${a} (${playersData[num][a]})`;
+                        updateTables();
+                    }, 500);
                 };
+
+                btn.onmouseup = () => {
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        playersData[num][a]++;
+                        btn.innerText = `${a} (${playersData[num][a]})`;
+                        updateTables();
+                    }
+                };
+
+                btn.onmouseleave = () => clearTimeout(longPressTimer);
+
                 card.appendChild(btn);
+
                 if (idx === actionsPositive.length - 1) {
                     const sep = document.createElement("div");
                     sep.style.borderBottom = "3px solid black";
@@ -220,7 +249,6 @@
                     card.appendChild(sep);
                 }
             });
-
             playersDiv.appendChild(card);
         });
 
@@ -245,17 +273,21 @@
         playerTable += "</tbody></table>";
         document.getElementById("playerStats").innerHTML = playerTable;
 
-        let teamSums = {};
-        [...actionsPositive, ...actionsNegative].forEach(a => teamSums[a] = 0);
-        Object.values(playersData).forEach(data => {
-            Object.keys(data).forEach(a => teamSums[a] += data[a]);
-        });
+        let teamTable = "<table id='teamTable'><thead><tr><th rowspan='2'>Team</th>" +
+            `<th colspan='${actionsPositive.length}'>Positive Aktionen</th>` +
+            `<th colspan='${actionsNegative.length}'>Negative Aktionen</th></tr><tr>` +
+            actionsPositive.map(a => `<th>${a}</th>`).join("") +
+            actionsNegative.map((a,i) => `<th class='${i===0 ? "thick-separator" : ""}'>${a}</th>`).join("") +
+            "</tr></thead><tbody>";
 
-        let teamTable = "<table id='teamTable'><thead><tr><th rowspan='2'>Aktion</th><th rowspan='2'>Summe</th></tr></thead><tbody>";
-        actionsPositive.forEach(a => teamTable += `<tr><td>${a}</td><td>${teamSums[a]}</td></tr>`);
-        teamTable += `<tr><td colspan='2' style='border-top: 3px solid black;'></td></tr>`;
-        actionsNegative.forEach(a => teamTable += `<tr><td>${a}</td><td>${teamSums[a]}</td></tr>`);
-        teamTable += "</tbody></table>";
+        let sums = {};
+        [...actionsPositive, ...actionsNegative].forEach(a => sums[a] = 0);
+        Object.values(playersData).forEach(p => Object.keys(p).forEach(a => sums[a] += p[a]));
+
+        teamTable += `<tr><td><b>Gesamt</b></td>` +
+            actionsPositive.map(a => `<td>${sums[a]}</td>`).join("") +
+            actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${sums[a]}</td>`).join("") +
+            "</tr></tbody></table>";
 
         document.getElementById("teamStats").innerHTML = teamTable;
     }
