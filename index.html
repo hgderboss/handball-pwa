@@ -15,28 +15,10 @@
         font-family: Arial, sans-serif; 
         margin: 0;
         position: relative;
-        background-color: #f5f5f5;
-    }
-    /* Wasserzeichen im Hintergrund */
-    body::before {
-        content: "";
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 60vw;
-        height: 60vw;
-        max-width: 800px;
-        max-height: 800px;
-        background-repeat: no-repeat;
-        background-position: center center;
-        background-size: contain;
-        opacity: 0.15;
-        filter: blur(1px);
-        z-index: -1;
-        pointer-events: none;
+        background-color: #ffffff; /* Rein weiß */
     }
     h1, h2 { text-align: center; margin-bottom: 15px; }
+
     /* Setup-Container */
     #setup { 
         background: white; 
@@ -45,6 +27,15 @@
         max-width: 500px;
         margin: 30px auto;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    #setup-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+    #setup-header img {
+        height: 50px;
     }
     #opponent { 
         font-size: 1.1em; 
@@ -177,7 +168,10 @@
 <body>
 
 <div id="setup">
-    <h1>Willkommen!</h1>
+    <div id="setup-header">
+        <img src="logo.png.JPG" alt="Logo">
+        <h1>Willkommen!</h1>
+    </div>
     <input type="text" id="opponent" placeholder="Gegner eingeben">
     <div id="player-selection">
         <div class="column" id="col1"></div>
@@ -201,7 +195,6 @@
 </div>
 <div id="teamStats"></div>
 
-<!-- Bibliotheken mit Cache-Busting -->
 <script>
     const cb = Date.now();
     const libs = [
@@ -216,10 +209,6 @@
     });
 
     window.addEventListener("load", () => {
-        // Wasserzeichen setzen
-        document.body.style.setProperty("--logo-url", `url('logo.png.JPG?cb=${cb}')`);
-        document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
-
         // Spieler-Checkboxen
         const col1 = document.getElementById("col1");
         const col2 = document.getElementById("col2");
@@ -370,17 +359,30 @@
     }
 
     function exportTableToExcel(tableID) {
+        if (typeof XLSX === "undefined") {
+            alert("Excel-Bibliothek noch nicht geladen!");
+            return;
+        }
         let table = document.getElementById(tableID);
         let wb = XLSX.utils.table_to_book(table, {sheet:"Sheet 1"});
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
 
     function exportTableToPDF(tableID) {
+        if (typeof window.jspdf === "undefined" || typeof window.jspdf.jsPDF === "undefined") {
+            alert("PDF-Bibliothek noch nicht geladen!");
+            return;
+        }
         const { jsPDF } = window.jspdf;
         let doc = new jsPDF({ orientation: "landscape" });
         doc.setFontSize(16);
         doc.setFont(undefined, "bold");
         doc.text(document.getElementById("headline").innerText, 14, 15);
+
+        if (typeof doc.autoTable === "undefined") {
+            alert("AutoTable-Plugin noch nicht geladen!");
+            return;
+        }
 
         doc.autoTable({
             html: `#${tableID}`,
