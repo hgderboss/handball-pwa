@@ -3,155 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Statistik vs Gegner</title>
+<title>Handball Statistik</title>
 <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    header, .setup { padding: 10px; text-align: center; background: #eee; }
-    h1 { font-size: 1.5em; margin: 0; }
-    .players { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; }
-    .player-card { border: 1px solid #ccc; border-radius: 8px; padding: 5px; min-width: 220px; text-align: center; background: #f9f9f9; }
-    .button-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; justify-content: center; }
-    button { flex: 1 1 calc(33% - 5px); min-width: 60px; padding: 10px; font-size: 1em; border-radius: 5px; border: none; cursor: pointer; }
-    .positive { background: #c8e6c9; }
-    .negative { background: #ffcdd2; }
-    .stats { padding: 10px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+    body { font-family: Arial, sans-serif; margin: 10px; }
+    h1 { text-align: center; }
+    .player-card { border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin: 10px; flex: 1; min-width: 250px; }
+    .player-name { font-weight: bold; font-size: 1.2em; text-align: center; margin-bottom: 10px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .btn { width: 48%; padding: 15px; margin: 2px 1%; border: none; cursor: pointer; font-size: 1em; border-radius: 5px; }
+    .positive { background-color: #d4edda; }
+    .negative { background-color: #f8d7da; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background: #f0f0f0; }
+    .thick-separator { border-left: 3px solid black; }
+    .export-buttons { margin-top: 20px; }
+    .hidden { display: none; }
 </style>
 </head>
 <body>
 
-<div class="setup">
-    <label>Gegner: <input type="text" id="opponent"></label>
-    <div id="player-select"></div>
-    <button onclick="startGame()">Start</button>
+<div id="setup">
+    Gegner: <input type="text" id="opponent" placeholder="Gegner eingeben">
+    <br><br>
+    <div id="player-selection">
+        <label><input type="checkbox" value="1"> Spieler 1</label>
+        <label><input type="checkbox" value="2"> Spieler 2</label>
+        <label><input type="checkbox" value="3"> Spieler 3</label>
+        <label><input type="checkbox" value="4"> Spieler 4</label>
+        <label><input type="checkbox" value="5"> Spieler 5</label>
+        <label><input type="checkbox" value="6"> Spieler 6</label>
+        <label><input type="checkbox" value="7"> Spieler 7</label>
+        <label><input type="checkbox" value="8"> Spieler 8</label>
+        <label><input type="checkbox" value="9"> Spieler 9</label>
+        <label><input type="checkbox" value="10"> Spieler 10</label>
+        <label><input type="checkbox" value="11"> Spieler 11</label>
+        <label><input type="checkbox" value="12"> Spieler 12</label>
+        <label><input type="checkbox" value="13"> Spieler 13</label>
+        <label><input type="checkbox" value="14"> Spieler 14</label>
+        <label><input type="checkbox" value="15"> Spieler 15</label>
+        <label><input type="checkbox" value="16"> Spieler 16</label>
+        <label><input type="checkbox" value="17"> Spieler 17</label>
+        <label><input type="checkbox" value="18"> Spieler 18</label>
+        <label><input type="checkbox" value="19"> Spieler 19</label>
+        <label><input type="checkbox" value="20"> Spieler 20</label>
+    </div>
+    <br>
+    <button onclick="start()">Start</button>
 </div>
 
-<header>
-    <h1 id="headline">Statistik vs ...</h1>
-</header>
+<h1 id="headline" class="hidden"></h1>
+<div id="players" class="grid"></div>
 
-<div class="players" id="players"></div>
+<h2>Spieler-Statistik</h2>
+<div class="export-buttons">
+    <button onclick="exportTableToExcel('playerTable')">Export Excel</button>
+    <button onclick="exportTableToPDF('playerTable')">Export PDF</button>
+</div>
+<div id="playerStats"></div>
 
-<div class="stats" id="stats"></div>
+<h2>Team-Statistik</h2>
+<div class="export-buttons">
+    <button onclick="exportTableToExcel('teamTable')">Export Excel</button>
+    <button onclick="exportTableToPDF('teamTable')">Export PDF</button>
+</div>
+<div id="teamStats"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const allPlayers = Array.from({length: 20}, (_, i) => `Spieler ${i+1}`);
-let selectedPlayers = [];
-let opponentName = "";
-let stats = {};
+    const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
+    const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
+    let playersData = {};
 
-const positiveActions = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
-const negativeActions = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
+    function start() {
+        const opponent = document.getElementById("opponent").value;
+        const selectedPlayers = Array.from(document.querySelectorAll("#player-selection input:checked"))
+            .map(cb => parseInt(cb.value));
+        
+        document.getElementById("setup").classList.add("hidden");
+        document.getElementById("headline").classList.remove("hidden");
+        document.getElementById("headline").innerText = `Statistik vs ${opponent}`;
 
-function initPlayerSelect() {
-    const container = document.getElementById('player-select');
-    allPlayers.forEach(name => {
-        const label = document.createElement('label');
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = name;
-        label.appendChild(cb);
-        label.append(` ${name} `);
-        container.appendChild(label);
-    });
-}
-initPlayerSelect();
+        const playersDiv = document.getElementById("players");
+        playersDiv.innerHTML = "";
 
-function startGame() {
-    opponentName = document.getElementById('opponent').value || "Unbekannt";
-    selectedPlayers = Array.from(document.querySelectorAll('#player-select input:checked')).map(cb => cb.value);
-    document.getElementById('headline').textContent = `Statistik vs ${opponentName}`;
-    initStats();
-    renderPlayers();
-    renderStats();
-}
+        selectedPlayers.forEach(num => {
+            playersData[num] = {};
+            [...actionsPositive, ...actionsNegative].forEach(a => playersData[num][a] = 0);
 
-function initStats() {
-    stats = {};
-    selectedPlayers.forEach(player => {
-        stats[player] = {};
-        [...positiveActions, ...negativeActions].forEach(a => stats[player][a] = 0);
-    });
-}
+            const card = document.createElement("div");
+            card.className = "player-card";
+            card.innerHTML = `<div class="player-name">Spieler ${num}</div>`;
 
-function renderPlayers() {
-    const container = document.getElementById('players');
-    container.innerHTML = '';
-    selectedPlayers.forEach(player => {
-        const card = document.createElement('div');
-        card.className = 'player-card';
-        const name = document.createElement('div');
-        name.textContent = player;
-        card.appendChild(name);
+            [...actionsPositive, ...actionsNegative].forEach((a, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "btn " + (idx < actionsPositive.length ? "positive" : "negative");
+                btn.innerText = `${a} (0)`;
+                btn.onmousedown = (e) => {
+                    if (e.buttons === 1) { playersData[num][a]++; }
+                    if (e.buttons === 2) { playersData[num][a] = Math.max(0, playersData[num][a] - 1); }
+                    btn.innerText = `${a} (${playersData[num][a]})`;
+                    updateTables();
+                };
+                card.appendChild(btn);
+                if (idx === actionsPositive.length - 1) {
+                    const sep = document.createElement("div");
+                    sep.style.borderBottom = "3px solid black";
+                    sep.style.margin = "5px 0";
+                    card.appendChild(sep);
+                }
+            });
 
-        const posRow = document.createElement('div');
-        posRow.className = 'button-row';
-        positiveActions.forEach(action => {
-            const btn = createButton(player, action, 'positive');
-            posRow.appendChild(btn);
+            playersDiv.appendChild(card);
         });
-        card.appendChild(posRow);
 
-        const negRow = document.createElement('div');
-        negRow.className = 'button-row';
-        negativeActions.forEach(action => {
-            const btn = createButton(player, action, 'negative');
-            negRow.appendChild(btn);
+        updateTables();
+    }
+
+    function updateTables() {
+        // Spieler-Statistik
+        let playerTable = "<table id='playerTable'><thead><tr><th rowspan='2'>Spieler</th>" +
+            `<th colspan='${actionsPositive.length}'>Positive Aktionen</th>` +
+            `<th colspan='${actionsNegative.length}'>Negative Aktionen</th></tr><tr>` +
+            actionsPositive.map(a => `<th>${a}</th>`).join("") +
+            actionsNegative.map((a,i) => `<th class='${i===0 ? "thick-separator" : ""}'>${a}</th>`).join("") +
+            "</tr></thead><tbody>";
+
+        Object.keys(playersData).forEach(num => {
+            playerTable += `<tr><td><b>Spieler ${num}</b></td>` +
+                actionsPositive.map(a => `<td>${playersData[num][a]}</td>`).join("") +
+                actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${playersData[num][a]}</td>`).join("") +
+                "</tr>";
         });
-        card.appendChild(negRow);
 
-        container.appendChild(card);
-    });
-}
+        playerTable += "</tbody></table>";
+        document.getElementById("playerStats").innerHTML = playerTable;
 
-function createButton(player, action, type) {
-    const btn = document.createElement('button');
-    btn.className = type;
-    updateButtonLabel(btn, action, stats[player][action]);
-    btn.addEventListener('click', () => {
-        stats[player][action]++;
-        updateButtonLabel(btn, action, stats[player][action]);
-        renderStats();
-    });
-    btn.addEventListener('contextmenu', e => e.preventDefault());
-    btn.addEventListener('touchstart', e => {
-        btn.longPressTimeout = setTimeout(() => {
-            if (stats[player][action] > 0) stats[player][action]--;
-            updateButtonLabel(btn, action, stats[player][action]);
-            renderStats();
-        }, 600);
-    });
-    btn.addEventListener('touchend', e => clearTimeout(btn.longPressTimeout));
-    return btn;
-}
+        // Team-Statistik
+        let teamSums = {};
+        [...actionsPositive, ...actionsNegative].forEach(a => teamSums[a] = 0);
+        Object.values(playersData).forEach(data => {
+            Object.keys(data).forEach(a => teamSums[a] += data[a]);
+        });
 
-function updateButtonLabel(btn, action, count) {
-    btn.textContent = `${action} (${count})`;
-}
+        let teamTable = "<table id='teamTable'><thead><tr><th rowspan='2'>Aktion</th><th rowspan='2'>Summe</th></tr></thead><tbody>";
+        actionsPositive.forEach(a => teamTable += `<tr><td>${a}</td><td>${teamSums[a]}</td></tr>`);
+        teamTable += `<tr><td colspan='2' style='border-top: 3px solid black;'></td></tr>`;
+        actionsNegative.forEach(a => teamTable += `<tr><td>${a}</td><td>${teamSums[a]}</td></tr>`);
+        teamTable += "</tbody></table>";
 
-function renderStats() {
-    const statsDiv = document.getElementById('stats');
-    let html = `<h2>Spieler-Statistik</h2><table><tr><th>Spieler</th>`;
-    [...positiveActions, ...negativeActions].forEach(a => html += `<th>${a}</th>`);
-    html += `</tr>`;
-    selectedPlayers.forEach(player => {
-        html += `<tr><td>${player}</td>`;
-        [...positiveActions, ...negativeActions].forEach(a => html += `<td>${stats[player][a]}</td>`);
-        html += `</tr>`;
-    });
-    html += `</table>`;
+        document.getElementById("teamStats").innerHTML = teamTable;
+    }
 
-    html += `<h2>Team-Statistik</h2><table><tr><th>Aktion</th><th>Summe</th></tr>`;
-    [...positiveActions, ...negativeActions].forEach(a => {
-        let sum = selectedPlayers.reduce((acc, p) => acc + stats[p][a], 0);
-        html += `<tr><td>${a}</td><td>${sum}</td></tr>`;
-    });
-    html += `</table>`;
+    function exportTableToExcel(tableID) {
+        let table = document.getElementById(tableID);
+        let wb = XLSX.utils.table_to_book(table, {sheet:"Sheet 1"});
+        XLSX.writeFile(wb, `${tableID}.xlsx`);
+    }
 
-    statsDiv.innerHTML = html;
-}
+    function exportTableToPDF(tableID) {
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF();
+        doc.autoTable({ html: `#${tableID}` });
+        doc.save(`${tableID}.pdf`);
+    }
 </script>
+
 </body>
 </html>
