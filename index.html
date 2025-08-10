@@ -3,230 +3,263 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Füchse Berlin Statistik</title>
+<title>Handball Statistik</title>
 <style>
     body {
         font-family: Arial, sans-serif;
         margin: 0;
         padding: 0;
+        background-color: #f9f9f9;
         text-align: center;
-        background: url('75067C70-07BC-48ED-B437-9624E46CFE65.jpeg') center center no-repeat;
-        background-size: 60%;
-        background-attachment: fixed;
-        background-color: #ffffff;
-        background-blend-mode: lighten;
     }
     header {
+        background-color: #ffffff;
+        padding: 10px;
+        border-bottom: 2px solid #ccc;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 10px;
-        background-color: #004c2c;
-        color: white;
-        font-size: 1.5em;
     }
     header img {
-        height: 40px;
-        margin-right: 10px;
+        height: 60px;
+        margin-right: 15px;
+    }
+    h1 {
+        font-size: 1.5em;
+        margin: 0;
     }
     .container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
-        margin: 15px;
+        padding: 20px;
+    }
+    .player-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
     }
     .player-card {
-        background-color: white;
-        border-radius: 8px;
+        background: white;
         padding: 10px;
-        width: 250px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    h2 {
-        font-size: 1.2em;
-        margin: 5px 0 10px 0;
-    }
-    .section-title {
-        font-weight: bold;
-        font-size: 0.9em;
-        margin: 5px 0;
-        background-color: #004c2c;
-        color: white;
-        padding: 3px;
         border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    .button-grid {
+    .button-row {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 5px;
+        margin-top: 5px;
     }
-    button {
+    .button-row-negative {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        margin-top: 5px;
+    }
+    .action-btn {
         padding: 10px;
+        font-size: 0.9em;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #ddd;
+    }
+    .pos { background-color: #cce5cc; }
+    .neg { background-color: #f2cccc; }
+    .double { grid-column: span 2; }
+    .stats-table {
+        margin-top: 30px;
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .stats-table th, .stats-table td {
+        border: 1px solid #ccc;
+        padding: 5px;
+        font-size: 0.9em;
+    }
+    .stats-table th {
+        background-color: #eee;
+    }
+    .export-buttons {
+        margin-top: 20px;
+    }
+    button.export {
+        padding: 10px 15px;
+        margin: 5px;
         font-size: 1em;
+        background-color: #007bff;
+        color: white;
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        color: #004c2c;
-    }
-    .positive { background-color: #c8e6c9; }
-    .negative { background-color: #ffcdd2; }
-    .full-width { grid-column: span 2; }
-    .divider {
-        border-top: 3px solid black;
-        margin: 5px 0;
-    }
-    .export-btns {
-        margin: 15px;
-    }
-    .export-btns button {
-        margin: 5px;
-        background-color: #004c2c;
-        color: white;
-        padding: 10px 15px;
     }
 </style>
 </head>
 <body>
 
-<!-- Startseite mit Gegnerauswahl -->
-<div id="start-screen">
+<div id="setupPage" class="container">
     <header>
-        <img src="75067C70-07BC-48ED-B437-9624E46CFE65.jpeg" alt="Logo">
-        Gegner eingeben
+        <img src="logo.png" alt="Füchse Berlin Logo">
+        <h1>Statistik vs <span id="gegnerTitel"></span></h1>
     </header>
-    <div style="margin:20px;">
-        <input type="text" id="opponent" placeholder="Gegnername eingeben" style="padding:10px;width:80%;font-size:1em;">
-        <br><br>
-        <button style="background-color:#004c2c;color:white;padding:10px 20px;" onclick="startMatch()">Weiter</button>
+    <h2>Spiel vorbereiten</h2>
+    <label>Gegnername: <input type="text" id="gegnerName"></label>
+    <h3>Spieler auswählen</h3>
+    <div id="playerSelect"></div>
+    <button onclick="startGame()">Weiter</button>
+</div>
+
+<div id="statsPage" style="display:none;" class="container">
+    <header>
+        <img src="logo.png" alt="Füchse Berlin Logo">
+        <h1>Statistik vs <span id="gameOpponent"></span></h1>
+    </header>
+    <div id="playersContainer"></div>
+
+    <h2>Spielerstatistik</h2>
+    <div id="playerStats"></div>
+
+    <h2>Teamstatistik</h2>
+    <div id="teamStats"></div>
+
+    <div class="export-buttons">
+        <button class="export" onclick="exportExcel()">Export als Excel</button>
+        <button class="export" onclick="exportPDF()">Export als PDF</button>
     </div>
 </div>
 
-<!-- Statistikseite -->
-<div id="stats-screen" style="display:none;">
-    <header>
-        <img src="75067C70-07BC-48ED-B437-9624E46CFE65.jpeg" alt="Logo">
-        <span id="headline">Statistik</span>
-    </header>
-
-    <div class="container" id="players-container"></div>
-
-    <div class="export-btns">
-        <button onclick="exportCSV()">Export CSV</button>
-        <button onclick="exportJSON()">Export JSON</button>
-    </div>
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-const players = Array.from({length: 20}, (_, i) => `Spieler ${i+1}`);
+const roster = Array.from({length: 20}, (_, i) => "Spieler " + (i+1));
 const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
 const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
 let stats = {};
+let selectedPlayers = [];
 
-players.forEach(player => {
-    stats[player] = {};
-    [...actionsPositive, ...actionsNegative].forEach(action => stats[player][action] = 0);
-});
-
-function startMatch() {
-    const opponent = document.getElementById("opponent").value || "Unbekannt";
-    document.getElementById("headline").innerText = `Statistik vs ${opponent}`;
-    document.getElementById("start-screen").style.display = "none";
-    document.getElementById("stats-screen").style.display = "block";
+function init() {
+    const selectDiv = document.getElementById("playerSelect");
+    roster.forEach(name => {
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = name;
+        selectDiv.appendChild(cb);
+        selectDiv.appendChild(document.createTextNode(name));
+        selectDiv.appendChild(document.createElement("br"));
+    });
+}
+function startGame() {
+    const gegner = document.getElementById("gegnerName").value;
+    document.getElementById("gameOpponent").textContent = gegner;
+    selectedPlayers = Array.from(document.querySelectorAll("#playerSelect input:checked")).map(cb => cb.value);
+    selectedPlayers.forEach(p => {
+        stats[p] = {pos: {}, neg: {}};
+        actionsPositive.forEach(a => stats[p].pos[a] = 0);
+        actionsNegative.forEach(a => stats[p].neg[a] = 0);
+    });
+    document.getElementById("setupPage").style.display = "none";
+    document.getElementById("statsPage").style.display = "block";
     renderPlayers();
 }
-
 function renderPlayers() {
-    const container = document.getElementById("players-container");
+    const container = document.getElementById("playersContainer");
     container.innerHTML = "";
-    players.forEach(player => {
+    selectedPlayers.forEach(player => {
         const card = document.createElement("div");
         card.className = "player-card";
+        const nameEl = document.createElement("strong");
+        nameEl.textContent = player;
+        card.appendChild(nameEl);
 
-        const title = document.createElement("h2");
-        title.textContent = player;
-        card.appendChild(title);
-
-        const posTitle = document.createElement("div");
-        posTitle.className = "section-title";
-        posTitle.textContent = "Positive Aktionen";
-        card.appendChild(posTitle);
-
-        const posGrid = document.createElement("div");
-        posGrid.className = "button-grid";
+        const rowPos = document.createElement("div");
+        rowPos.className = "button-row";
         actionsPositive.forEach(action => {
             const btn = document.createElement("button");
-            btn.className = "positive";
-            btn.innerText = `${action} (${stats[player][action]})`;
-            btn.addEventListener("click", () => updateStat(player, action, 1));
-            btn.addEventListener("contextmenu", e => { e.preventDefault(); updateStat(player, action, -1); });
-            btn.addEventListener("mousedown", e => { if (e.buttons === 1) longPress(btn, player, action); });
-            posGrid.appendChild(btn);
+            btn.textContent = action + " (0)";
+            btn.className = "action-btn pos";
+            btn.onclick = () => { stats[player].pos[action]++; update(); };
+            btn.oncontextmenu = e => { e.preventDefault(); stats[player].pos[action]--; update(); };
+            btn.onmousedown = e => { if(e.button === 0 && e.detail > 1) { stats[player].pos[action]--; update(); }};
+            rowPos.appendChild(btn);
         });
-        card.appendChild(posGrid);
+        card.appendChild(rowPos);
 
-        const divider = document.createElement("div");
-        divider.className = "divider";
-        card.appendChild(divider);
-
-        const negTitle = document.createElement("div");
-        negTitle.className = "section-title";
-        negTitle.textContent = "Negative Aktionen";
-        card.appendChild(negTitle);
-
-        const negGrid = document.createElement("div");
-        negGrid.className = "button-grid";
+        const rowNeg = document.createElement("div");
+        rowNeg.className = "button-row-negative";
         actionsNegative.forEach(action => {
             const btn = document.createElement("button");
-            btn.className = "negative" + (action === "TF" ? " full-width" : "");
-            btn.innerText = `${action} (${stats[player][action]})`;
-            btn.addEventListener("click", () => updateStat(player, action, 1));
-            btn.addEventListener("contextmenu", e => { e.preventDefault(); updateStat(player, action, -1); });
-            btn.addEventListener("mousedown", e => { if (e.buttons === 1) longPress(btn, player, action); });
-            negGrid.appendChild(btn);
+            btn.textContent = action + " (0)";
+            btn.className = "action-btn neg" + (action === "TF" ? " double" : "");
+            btn.onclick = () => { stats[player].neg[action]++; update(); };
+            btn.oncontextmenu = e => { e.preventDefault(); stats[player].neg[action]--; update(); };
+            btn.onmousedown = e => { if(e.button === 0 && e.detail > 1) { stats[player].neg[action]--; update(); }};
+            rowNeg.appendChild(btn);
         });
-        card.appendChild(negGrid);
+        card.appendChild(rowNeg);
 
         container.appendChild(card);
     });
+    update();
 }
-
-function updateStat(player, action, delta) {
-    stats[player][action] = Math.max(0, stats[player][action] + delta);
-    renderPlayers();
-}
-
-function longPress(btn, player, action) {
-    let pressTimer = setTimeout(() => {
-        if (stats[player][action] > 0) {
-            stats[player][action]--;
-            renderPlayers();
-        }
-    }, 600);
-    btn.onmouseup = () => clearTimeout(pressTimer);
-}
-
-function exportCSV() {
-    let csv = "Spieler," + [...actionsPositive, ...actionsNegative].join(",") + "\n";
-    players.forEach(player => {
-        csv += player + "," + [...actionsPositive, ...actionsNegative].map(a => stats[player][a]).join(",") + "\n";
+function update() {
+    document.querySelectorAll(".player-card").forEach((card, idx) => {
+        const player = selectedPlayers[idx];
+        const btnsPos = card.querySelectorAll(".button-row button");
+        actionsPositive.forEach((a, i) => btnsPos[i].textContent = `${a} (${stats[player].pos[a]})`);
+        const btnsNeg = card.querySelectorAll(".button-row-negative button");
+        actionsNegative.forEach((a, i) => btnsNeg[i].textContent = `${a} (${stats[player].neg[a]})`);
     });
-    downloadFile(csv, "statistik.csv", "text/csv");
+    renderStats();
 }
+function renderStats() {
+    const playerStatsDiv = document.getElementById("playerStats");
+    playerStatsDiv.innerHTML = "<table class='stats-table'><tr><th>Spieler</th>" + actionsPositive.map(a=>"<th>"+a+"</th>").join("") + actionsNegative.map(a=>"<th>"+a+"</th>").join("") + "</tr>";
+    selectedPlayers.forEach(player => {
+        let row = `<tr><td><strong>${player}</strong></td>`;
+        actionsPositive.forEach(a => row += `<td>${stats[player].pos[a]}</td>`);
+        actionsNegative.forEach(a => row += `<td>${stats[player].neg[a]}</td>`);
+        row += "</tr>";
+        playerStatsDiv.innerHTML += row;
+    });
+    playerStatsDiv.innerHTML += "</table>";
 
-function exportJSON() {
-    downloadFile(JSON.stringify(stats), "statistik.json", "application/json");
+    const teamStatsDiv = document.getElementById("teamStats");
+    let team = {pos:{}, neg:{}};
+    actionsPositive.forEach(a => team.pos[a] = 0);
+    actionsNegative.forEach(a => team.neg[a] = 0);
+    selectedPlayers.forEach(player => {
+        actionsPositive.forEach(a => team.pos[a] += stats[player].pos[a]);
+        actionsNegative.forEach(a => team.neg[a] += stats[player].neg[a]);
+    });
+    let row = "<table class='stats-table'><tr><th>Team</th>" + actionsPositive.map(a=>"<th>"+a+"</th>").join("") + actionsNegative.map(a=>"<th>"+a+"</th>").join("") + "</tr>";
+    row += "<tr><td><strong>Gesamt</strong></td>";
+    actionsPositive.forEach(a => row += `<td>${team.pos[a]}</td>`);
+    actionsNegative.forEach(a => row += `<td>${team.neg[a]}</td>`);
+    row += "</tr></table>";
+    teamStatsDiv.innerHTML = row;
 }
-
-function downloadFile(content, filename, type) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+function exportExcel() {
+    let ws_data = [["Spieler", ...actionsPositive, ...actionsNegative]];
+    selectedPlayers.forEach(player => {
+        ws_data.push([player, ...actionsPositive.map(a=>stats[player].pos[a]), ...actionsNegative.map(a=>stats[player].neg[a])]);
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    XLSX.utils.book_append_sheet(wb, ws, "Statistik");
+    XLSX.writeFile(wb, "statistik.xlsx");
 }
+function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text("Handball Statistik", 10, 10);
+    let y = 20;
+    selectedPlayers.forEach(player => {
+        doc.text(player, 10, y);
+        y += 6;
+    });
+    doc.save("statistik.pdf");
+}
+init();
 </script>
 </body>
 </html>
