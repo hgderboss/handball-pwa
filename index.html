@@ -78,7 +78,7 @@
     .export-buttons { margin-top: 20px; }
     .hidden { display: none; }
     #setup { 
-        background: rgba(255, 255, 255, 0.85); /* leicht transparent für Hintergrundsichtbarkeit */
+        background: rgba(255, 255, 255, 0.6); /* transparenter für Hintergrundsichtbarkeit */
         padding: 20px; 
         border-radius: 10px; 
         max-width: 100%;
@@ -141,7 +141,7 @@
 
 <div id="setup">
     <h1>Willkommen!</h1>
-    Gegner: <input type="text" id="opponent" placeholder="Gegner eingeben">
+    <input type="text" id="opponent" placeholder="Gegner eingeben">
     <br><br>
     <div id="player-selection">
         <script>
@@ -181,13 +181,14 @@
     let playersData = {};
     let pressTimer;
     let longPressActive = false;
+    let touchActive = false; // verhindert doppelte Auslösung
 
     function validateAndStart() {
         const opponent = document.getElementById("opponent").value.trim();
         const selectedPlayers = Array.from(document.querySelectorAll("#player-selection input:checked"));
 
         let errors = [];
-        if (opponent.length < 3) errors.push("Gegnername (mindestens 3 Buchstaben)");
+        if (opponent.length === 0) errors.push("Gegner eingeben");
         if (selectedPlayers.length < 7) errors.push("Mindestens 7 Spieler auswählen");
 
         if (errors.length > 0) {
@@ -223,7 +224,9 @@
                 if (a === "TF" && idx >= actionsPositive.length) btn.classList.add("full-width");
                 btn.innerText = `${a} (0)`;
 
-                const startPress = () => {
+                const startPress = (isTouch = false) => {
+                    if (isTouch) touchActive = true;
+                    if (!isTouch && touchActive) return; // verhindert doppelte Auslösung
                     longPressActive = false;
                     pressTimer = setTimeout(() => {
                         playersData[num][a] = Math.max(0, playersData[num][a] - 1);
@@ -233,7 +236,10 @@
                     }, 500);
                 };
 
-                const endPress = () => {
+                const endPress = (isTouch = false) => {
+                    if (isTouch) {
+                        touchActive = false;
+                    }
                     clearTimeout(pressTimer);
                     if (!longPressActive) {
                         playersData[num][a]++;
@@ -242,13 +248,13 @@
                     }
                 };
 
-                btn.addEventListener("mousedown", startPress);
-                btn.addEventListener("mouseup", endPress);
+                btn.addEventListener("mousedown", () => startPress(false));
+                btn.addEventListener("mouseup", () => endPress(false));
                 btn.addEventListener("mouseleave", () => clearTimeout(pressTimer));
 
                 // Touch-Events für Smartphones/Tablets
-                btn.addEventListener("touchstart", startPress);
-                btn.addEventListener("touchend", endPress);
+                btn.addEventListener("touchstart", () => startPress(true));
+                btn.addEventListener("touchend", () => endPress(true));
                 btn.addEventListener("touchcancel", () => clearTimeout(pressTimer));
 
                 card.appendChild(btn);
