@@ -18,13 +18,13 @@
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        width: 60vw; /* Größer */
+        width: 60vw;
         height: auto;
-        background-image: url('logo.png.JPG');
+        background-image: url('logo.png.JPG?v=' + Date.now()); /* Dynamischer Zeitstempel */
         background-repeat: no-repeat;
         background-position: center center;
         background-size: contain;
-        opacity: 0.15; /* Klarer sichtbar */
+        opacity: 0.15;
         z-index: -1;
         pointer-events: none;
     }
@@ -141,26 +141,14 @@
     Gegner: <input type="text" id="opponent" placeholder="Gegner eingeben">
     <br><br>
     <div id="player-selection">
-        <label><input type="checkbox" value="1"> Spieler 1</label>
-        <label><input type="checkbox" value="2"> Spieler 2</label>
-        <label><input type="checkbox" value="3"> Spieler 3</label>
-        <label><input type="checkbox" value="4"> Spieler 4</label>
-        <label><input type="checkbox" value="5"> Spieler 5</label>
-        <label><input type="checkbox" value="6"> Spieler 6</label>
-        <label><input type="checkbox" value="7"> Spieler 7</label>
-        <label><input type="checkbox" value="8"> Spieler 8</label>
-        <label><input type="checkbox" value="9"> Spieler 9</label>
-        <label><input type="checkbox" value="10"> Spieler 10</label>
-        <label><input type="checkbox" value="11"> Spieler 11</label>
-        <label><input type="checkbox" value="12"> Spieler 12</label>
-        <label><input type="checkbox" value="13"> Spieler 13</label>
-        <label><input type="checkbox" value="14"> Spieler 14</label>
-        <label><input type="checkbox" value="15"> Spieler 15</label>
-        <label><input type="checkbox" value="16"> Spieler 16</label>
-        <label><input type="checkbox" value="17"> Spieler 17</label>
-        <label><input type="checkbox" value="18"> Spieler 18</label>
-        <label><input type="checkbox" value="19"> Spieler 19</label>
-        <label><input type="checkbox" value="20"> Spieler 20</label>
+        <!-- Spieler-Checkboxen -->
+        <script>
+            document.write(
+                Array.from({length: 20}, (_, i) => 
+                    `<label><input type='checkbox' value='${i+1}'> Spieler ${i+1}</label>`
+                ).join("")
+            );
+        </script>
     </div>
     <br>
     <button class="start-btn" onclick="start()">Start</button>
@@ -183,8 +171,9 @@
 </div>
 <div id="teamStats"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Skripte mit Zeitstempel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=<?php echo time(); ?>"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?v=<?php echo time(); ?>"></script>
 <script>
     const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
     const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
