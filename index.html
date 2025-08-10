@@ -78,7 +78,7 @@
     .export-buttons { margin-top: 20px; }
     .hidden { display: none; }
     #setup { 
-        background: rgba(255, 255, 255, 0.6); /* transparenter für Hintergrundsichtbarkeit */
+        background: rgba(255, 255, 255, 0.4); /* Transparenz auf 0.4 geändert */
         padding: 20px; 
         border-radius: 10px; 
         max-width: 100%;
@@ -181,7 +181,7 @@
     let playersData = {};
     let pressTimer;
     let longPressActive = false;
-    let touchActive = false; // verhindert doppelte Auslösung
+    let activeTouch = false;
 
     function validateAndStart() {
         const opponent = document.getElementById("opponent").value.trim();
@@ -224,9 +224,7 @@
                 if (a === "TF" && idx >= actionsPositive.length) btn.classList.add("full-width");
                 btn.innerText = `${a} (0)`;
 
-                const startPress = (isTouch = false) => {
-                    if (isTouch) touchActive = true;
-                    if (!isTouch && touchActive) return; // verhindert doppelte Auslösung
+                const startPress = () => {
                     longPressActive = false;
                     pressTimer = setTimeout(() => {
                         playersData[num][a] = Math.max(0, playersData[num][a] - 1);
@@ -236,10 +234,7 @@
                     }, 500);
                 };
 
-                const endPress = (isTouch = false) => {
-                    if (isTouch) {
-                        touchActive = false;
-                    }
+                const endPress = () => {
                     clearTimeout(pressTimer);
                     if (!longPressActive) {
                         playersData[num][a]++;
@@ -248,13 +243,20 @@
                     }
                 };
 
-                btn.addEventListener("mousedown", () => startPress(false));
-                btn.addEventListener("mouseup", () => endPress(false));
+                btn.addEventListener("mousedown", e => { if (!activeTouch) startPress(); });
+                btn.addEventListener("mouseup", e => { if (!activeTouch) endPress(); });
                 btn.addEventListener("mouseleave", () => clearTimeout(pressTimer));
 
-                // Touch-Events für Smartphones/Tablets
-                btn.addEventListener("touchstart", () => startPress(true));
-                btn.addEventListener("touchend", () => endPress(true));
+                btn.addEventListener("touchstart", e => { 
+                    activeTouch = true; 
+                    startPress(); 
+                    e.preventDefault(); 
+                });
+                btn.addEventListener("touchend", e => { 
+                    endPress(); 
+                    setTimeout(() => activeTouch = false, 300); 
+                    e.preventDefault();
+                });
                 btn.addEventListener("touchcancel", () => clearTimeout(pressTimer));
 
                 card.appendChild(btn);
