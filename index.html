@@ -30,7 +30,7 @@
         z-index: -1;
         pointer-events: none;
     }
-    h1 { text-align: center; }
+    h1, h2 { text-align: center; }
     .player-card { 
         border: 1px solid #ccc; 
         border-radius: 8px; 
@@ -140,6 +140,7 @@
 <body>
 
 <div id="setup">
+    <h1>Willkommen!</h1>
     Gegner: <input type="text" id="opponent" placeholder="Gegner eingeben">
     <br><br>
     <div id="player-selection">
@@ -178,7 +179,8 @@
     const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
     const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
     let playersData = {};
-    let longPressTimer;
+    let pressTimer;
+    let longPressActive = false;
 
     function validateAndStart() {
         const opponent = document.getElementById("opponent").value.trim();
@@ -221,24 +223,26 @@
                 if (a === "TF" && idx >= actionsPositive.length) btn.classList.add("full-width");
                 btn.innerText = `${a} (0)`;
 
-                btn.onmousedown = () => {
-                    longPressTimer = setTimeout(() => {
+                btn.addEventListener("mousedown", () => {
+                    longPressActive = false;
+                    pressTimer = setTimeout(() => {
                         playersData[num][a] = Math.max(0, playersData[num][a] - 1);
                         btn.innerText = `${a} (${playersData[num][a]})`;
                         updateTables();
+                        longPressActive = true;
                     }, 500);
-                };
+                });
 
-                btn.onmouseup = () => {
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
+                btn.addEventListener("mouseup", () => {
+                    clearTimeout(pressTimer);
+                    if (!longPressActive) {
                         playersData[num][a]++;
                         btn.innerText = `${a} (${playersData[num][a]})`;
                         updateTables();
                     }
-                };
+                });
 
-                btn.onmouseleave = () => clearTimeout(longPressTimer);
+                btn.addEventListener("mouseleave", () => clearTimeout(pressTimer));
 
                 card.appendChild(btn);
 
