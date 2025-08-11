@@ -341,10 +341,8 @@
         let table = document.getElementById(tableID);
         let wb = XLSX.utils.table_to_book(table, {sheet:"Statistik"});
         let ws = wb.Sheets["Statistik"];
-
         let colWidths = Array.from({length: table.rows[0].cells.length}, () => ({ wch: 10 }));
         ws['!cols'] = colWidths;
-
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
 
@@ -361,11 +359,13 @@
             headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
             styles: { halign: "center", cellPadding: 2, fontSize: 10 },
             startY: 20,
-            didParseCell: function (data) {
-                // Dicke Linie NACH der Spalte "7M" (letzte positive)
-                if ((data.section === 'body' || data.section === 'head') && data.column.index === actionsPositive.length) {
-                    data.cell.styles.borderRightWidth = 1.5;
-                    data.cell.styles.lineColor = [0, 0, 0];
+            didDrawCell: function (data) {
+                // Dicke Linie nach der "7M"-Spalte (letzte positive Aktion)
+                if (data.column.index === actionsPositive.length) {
+                    let x = data.cell.x + data.cell.width;
+                    data.doc.setDrawColor(0, 0, 0);
+                    data.doc.setLineWidth(1.5);
+                    data.doc.line(x, data.cell.y, x, data.cell.y + data.cell.height);
                 }
             }
         });
