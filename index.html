@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Handball Statistik</title>
 
-<!-- Cache komplett verhindern -->
+<!-- Cache verhindern -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
@@ -14,8 +14,7 @@
     body { 
         font-family: Arial, sans-serif; 
         margin: 0;
-        position: relative;
-        background-color: #ffffff;
+        background-color: #fff;
     }
     body::before, body::after {
         content: "";
@@ -24,8 +23,6 @@
         transform: translateY(-50%);
         width: 70vw;
         height: 90vh;
-        max-width: none;
-        max-height: none;
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
@@ -53,9 +50,8 @@
         margin-bottom: 20px;
         border: 1px solid #ccc;
         border-radius: 8px;
-        box-sizing: border-box;
-        transition: border-color 0.3s;
         background-color: rgba(255,255,255,0.85);
+        transition: border-color 0.3s, box-shadow 0.3s;
     }
     #opponent:focus {
         outline: none;
@@ -64,9 +60,9 @@
     }
     #player-selection { 
         display: flex; 
+        gap: 10px;
         flex-wrap: nowrap; 
         justify-content: space-between;
-        gap: 10px;
     }
     #player-selection .column {
         width: 48%;
@@ -83,8 +79,7 @@
         margin-right: 6px;
         transform: scale(1.2);
     }
-
-    button.start-btn {
+    .start-btn {
         font-size: 1.3em; 
         padding: 12px 15px; 
         background: linear-gradient(90deg, #009688, #26a69a); 
@@ -96,10 +91,10 @@
         margin-top: 20px;
         transition: background 0.3s, transform 0.1s;
     }
-    button.start-btn:hover {
+    .start-btn:hover {
         background: linear-gradient(90deg, #00796b, #26a69a);
     }
-    button.start-btn:active {
+    .start-btn:active {
         transform: scale(0.98);
     }
     .player-card { 
@@ -136,7 +131,7 @@
     }
     .positive { background-color: #d4edda; }
     .negative { background-color: #f8d7da; }
-    .btn.full-width { width: 98%; }
+    .full-width { width: 98%; }
     table { 
         width: 100%; 
         border-collapse: collapse; 
@@ -150,51 +145,38 @@
     .export-buttons { margin-top: 20px; text-align: center; }
     .hidden { display: none; }
     @media (max-width: 768px) {
-        .btn { 
-            width: 100%; 
-            font-size: 0.95em;
-            padding: 10px;
-        }
-        .player-card {
-            min-width: unset;
-            width: 100%;
-        }
-        #player-selection {
-            flex-direction: column;
-        }
-        #player-selection .column {
-            width: 100%;
-        }
-        table {
-            font-size: 0.8em;
-        }
+        .btn { width: 100%; font-size: 0.95em; padding: 10px; }
+        .player-card { min-width: unset; width: 100%; }
+        #player-selection { flex-direction: column; }
+        #player-selection .column { width: 100%; }
+        table { font-size: 0.8em; }
     }
 </style>
 </head>
 <body>
 
-<div id="setup">
+<main id="setup">
     <h1>Willkommen!</h1>
     <input type="text" id="opponent" placeholder="Gegner eingeben">
-    <div id="player-selection">
+    <section id="player-selection">
         <div class="column" id="col1"></div>
         <div class="column" id="col2"></div>
-    </div>
-    <button class="start-btn" onclick="validateAndStart()">Start</button>
-</div>
+    </section>
+    <button class="start-btn" id="startBtn">Start</button>
+</main>
 
 <h1 id="headline" class="hidden"></h1>
 <div id="players" class="grid"></div>
 
 <div class="export-buttons hidden" id="playerExport">
-    <button onclick="exportTableToExcel('playerTable')">Export Excel</button>
-    <button onclick="exportTableToPDF('playerTable')">Export PDF</button>
+    <button data-export="excel" data-table="playerTable">Export Excel</button>
+    <button data-export="pdf" data-table="playerTable">Export PDF</button>
 </div>
 <div id="playerStats"></div>
 
 <div class="export-buttons hidden" id="teamExport">
-    <button onclick="exportTableToExcel('teamTable')">Export Excel</button>
-    <button onclick="exportTableToPDF('teamTable')">Export PDF</button>
+    <button data-export="excel" data-table="teamTable">Export Excel</button>
+    <button data-export="pdf" data-table="teamTable">Export PDF</button>
 </div>
 <div id="teamStats"></div>
 
@@ -203,50 +185,53 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
+(() => {
     const cb = Date.now();
-
-    window.addEventListener("load", () => {
-        document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
-        document.styleSheets[0].cssRules[2].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
-
-        const col1 = document.getElementById("col1");
-        const col2 = document.getElementById("col2");
-        for (let i = 1; i <= 10; i++) {
-            col1.innerHTML += `<label><input type='checkbox' value='${i}'> Spieler ${i}</label>`;
-        }
-        for (let i = 11; i <= 20; i++) {
-            col2.innerHTML += `<label><input type='checkbox' value='${i}'> Spieler ${i}</label>`;
-        }
-    });
+    const col1 = document.getElementById("col1");
+    const col2 = document.getElementById("col2");
+    const startBtn = document.getElementById("startBtn");
 
     const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
     const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
     let playersData = {};
     let pressTimer, longPressActive, activeTouch;
 
+    // Logo-Hintergrund setzen
+    window.addEventListener("load", () => {
+        document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
+        document.styleSheets[0].cssRules[2].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
+    });
+
+    // Spieler-Checkboxen generieren
+    for (let i = 1; i <= 20; i++) {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = i;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(` Spieler ${i}`));
+        (i <= 10 ? col1 : col2).appendChild(label);
+    }
+
     function validateAndStart() {
         const opponent = document.getElementById("opponent").value.trim();
         const selectedPlayers = Array.from(document.querySelectorAll("#player-selection input:checked"));
         let errors = [];
-        if (opponent.length === 0) errors.push("Gegner eingeben");
+        if (!opponent) errors.push("Gegner eingeben");
         if (selectedPlayers.length < 7) errors.push("Mindestens 7 Spieler auswählen");
-        if (errors.length > 0) {
+        if (errors.length) {
             alert("Bitte korrigieren:\n- " + errors.join("\n- "));
             return;
         }
-        start();
+        startGame(opponent, selectedPlayers.map(cb => parseInt(cb.value)));
     }
 
-    function start() {
-        const opponent = document.getElementById("opponent").value;
+    function startGame(opponent, selectedPlayers) {
         document.getElementById("headline").innerText = `Statistik vs ${opponent}`;
         document.getElementById("setup").classList.add("hidden");
         document.getElementById("headline").classList.remove("hidden");
         document.getElementById("playerExport").classList.remove("hidden");
         document.getElementById("teamExport").classList.remove("hidden");
-
-        const selectedPlayers = Array.from(document.querySelectorAll("#player-selection input:checked"))
-            .map(cb => parseInt(cb.value));
 
         const playersDiv = document.getElementById("players");
         playersDiv.innerHTML = "";
@@ -257,19 +242,22 @@
 
             const card = document.createElement("div");
             card.className = "player-card";
-            card.innerHTML = `<div class="player-name">Spieler ${num}</div>`;
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "player-name";
+            nameDiv.textContent = `Spieler ${num}`;
+            card.appendChild(nameDiv);
 
             [...actionsPositive, ...actionsNegative].forEach((a, idx) => {
                 const btn = document.createElement("button");
-                btn.className = "btn " + (idx < actionsPositive.length ? "positive" : "negative");
+                btn.className = `btn ${idx < actionsPositive.length ? "positive" : "negative"}`;
                 if (a === "TF" && idx >= actionsPositive.length) btn.classList.add("full-width");
-                btn.innerText = `${a} (0)`;
+                btn.textContent = `${a} (0)`;
 
                 const startPress = () => {
                     longPressActive = false;
                     pressTimer = setTimeout(() => {
                         playersData[num][a] = Math.max(0, playersData[num][a] - 1);
-                        btn.innerText = `${a} (${playersData[num][a]})`;
+                        btn.textContent = `${a} (${playersData[num][a]})`;
                         updateTables();
                         longPressActive = true;
                     }, 500);
@@ -278,7 +266,7 @@
                     clearTimeout(pressTimer);
                     if (!longPressActive) {
                         playersData[num][a]++;
-                        btn.innerText = `${a} (${playersData[num][a]})`;
+                        btn.textContent = `${a} (${playersData[num][a]})`;
                         updateTables();
                     }
                 };
@@ -288,6 +276,7 @@
                 btn.addEventListener("touchstart", e => { activeTouch = true; startPress(); e.preventDefault(); });
                 btn.addEventListener("touchend", e => { endPress(); setTimeout(() => activeTouch = false, 300); e.preventDefault(); });
                 btn.addEventListener("touchcancel", () => clearTimeout(pressTimer));
+
                 card.appendChild(btn);
 
                 if (idx === actionsPositive.length - 1) {
@@ -303,84 +292,55 @@
     }
 
     function updateTables() {
-        let playerTable = "<table id='playerTable'><thead><tr><th rowspan='2'>Spieler</th>" +
-            `<th colspan='${actionsPositive.length}'>Positive Aktionen</th>` +
-            `<th colspan='${actionsNegative.length}'>Negative Aktionen</th></tr><tr>` +
-            actionsPositive.map(a => `<th>${a}</th>`).join("") +
-            actionsNegative.map((a,i) => `<th class='${i===0 ? "thick-separator" : ""}'>${a}</th>`).join("") +
-            "</tr></thead><tbody>";
+        const buildTable = (id, header1, header2, data) => {
+            let table = `<table id="${id}"><thead><tr><th rowspan="2">${header1}</th>` +
+                `<th colspan="${actionsPositive.length}">Positive Aktionen</th>` +
+                `<th colspan="${actionsNegative.length}">Negative Aktionen</th></tr><tr>` +
+                actionsPositive.map(a => `<th>${a}</th>`).join("") +
+                actionsNegative.map((a,i) => `<th class="${i===0 ? "thick-separator" : ""}">${a}</th>`).join("") +
+                `</tr></thead><tbody>${data}</tbody></table>`;
+            return table;
+        };
 
-        Object.keys(playersData).forEach(num => {
-            playerTable += `<tr><td><b>Spieler ${num}</b></td>` +
-                actionsPositive.map(a => `<td>${playersData[num][a]}</td>`).join("") +
-                actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${playersData[num][a]}</td>`).join("") +
-                "</tr>";
-        });
-        playerTable += "</tbody></table>";
-        document.getElementById("playerStats").innerHTML = playerTable;
-
-        let teamTable = "<table id='teamTable'><thead><tr><th rowspan='2'>Team</th>" +
-            `<th colspan='${actionsPositive.length}'>Positive Aktionen</th>` +
-            `<th colspan='${actionsNegative.length}'>Negative Aktionen</th></tr><tr>` +
-            actionsPositive.map(a => `<th>${a}</th>`).join("") +
-            actionsNegative.map((a,i) => `<th class='${i===0 ? "thick-separator" : ""}'>${a}</th>`).join("") +
-            "</tr></thead><tbody>";
+        let playerRows = Object.keys(playersData).map(num =>
+            `<tr><td><b>Spieler ${num}</b></td>` +
+            actionsPositive.map(a => `<td>${playersData[num][a]}</td>`).join("") +
+            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${playersData[num][a]}</td>`).join("")
+        ).join("");
+        document.getElementById("playerStats").innerHTML = buildTable("playerTable", "Spieler", actionsPositive.concat(actionsNegative), playerRows);
 
         let sums = {};
         [...actionsPositive, ...actionsNegative].forEach(a => sums[a] = 0);
         Object.values(playersData).forEach(p => Object.keys(p).forEach(a => sums[a] += p[a]));
 
-        teamTable += `<tr><td><b>Gesamt</b></td>` +
+        let teamRow = `<tr><td><b>Gesamt</b></td>` +
             actionsPositive.map(a => `<td>${sums[a]}</td>`).join("") +
-            actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${sums[a]}</td>`).join("") +
-            "</tr></tbody></table>";
-        document.getElementById("teamStats").innerHTML = teamTable;
+            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${sums[a]}</td>`).join("") +
+            "</tr>";
+        document.getElementById("teamStats").innerHTML = buildTable("teamTable", "Team", actionsPositive.concat(actionsNegative), teamRow);
     }
 
     function exportTableToExcel(tableID) {
-        let table = document.getElementById(tableID);
-        let wb = XLSX.utils.book_new();
-        let ws_data = [];
-
-        // Erste Kopfzeile
-        ws_data.push(["", ...Array(actionsPositive.length).fill("Positive Aktionen"), ...Array(actionsNegative.length).fill("Negative Aktionen")]);
-
-        // Zweite Kopfzeile
-        ws_data.push(["Spieler", ...actionsPositive, ...actionsNegative]);
-
-        // Datenzeilen
+        const table = document.getElementById(tableID);
+        const wb = XLSX.utils.book_new();
+        const ws_data = [
+            ["", ...Array(actionsPositive.length).fill("Positive Aktionen"), ...Array(actionsNegative.length).fill("Negative Aktionen")],
+            ["Spieler", ...actionsPositive, ...actionsNegative]
+        ];
         Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
-            let cells = Array.from(row.querySelectorAll("td")).map(td => td.textContent);
-            ws_data.push(cells);
+            ws_data.push(Array.from(row.querySelectorAll("td")).map(td => td.textContent));
         });
-
-        let ws = XLSX.utils.aoa_to_sheet(ws_data);
-
-        // Spaltenbreiten
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
         ws['!cols'] = Array(ws_data[0].length).fill({ wch: 10 });
-
-        // Dicke Trennlinie zwischen positiven und negativen Aktionen
-        let separatorColIndex = actionsPositive.length; 
-        let range = XLSX.utils.decode_range(ws['!ref']);
-        for (let R = 0; R <= range.e.r; R++) {
-            let cellAddress = XLSX.utils.encode_cell({ r: R, c: separatorColIndex });
-            if (!ws[cellAddress]) continue;
-            if (!ws[cellAddress].s) ws[cellAddress].s = {};
-            if (!ws[cellAddress].s.border) ws[cellAddress].s.border = {};
-            ws[cellAddress].s.border.left = { style: "medium" };
-        }
-
         XLSX.utils.book_append_sheet(wb, ws, "Statistik");
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
 
     function exportTableToPDF(tableID) {
         const { jsPDF } = window.jspdf;
-        let doc = new jsPDF({ orientation: "landscape" });
-        doc.setFontSize(16);
-        doc.setFont(undefined, "bold");
+        const doc = new jsPDF({ orientation: "landscape" });
+        doc.setFontSize(16).setFont(undefined, "bold");
         doc.text(document.getElementById("headline").innerText, 14, 15);
-
         doc.autoTable({
             html: `#${tableID}`,
             theme: "grid",
@@ -398,6 +358,16 @@
         });
         doc.save(`${tableID}.pdf`);
     }
+
+    startBtn.addEventListener("click", validateAndStart);
+    document.querySelectorAll("[data-export]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const tableID = btn.getAttribute("data-table");
+            if (btn.dataset.export === "excel") exportTableToExcel(tableID);
+            if (btn.dataset.export === "pdf") exportTableToPDF(tableID);
+        });
+    });
+})();
 </script>
 </body>
 </html>
