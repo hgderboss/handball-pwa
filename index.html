@@ -17,35 +17,35 @@
         position: relative;
         background-color: #ffffff;
     }
-    /* Wasserzeichen im Hintergrund (doppelt für beide Seiten) */
+    /* Wasserzeichen im Hintergrund (größer für Setup) */
     body::before, body::after {
         content: "";
         position: fixed;
         top: 50%;
         transform: translateY(-50%);
-        width: 50vw;
-        height: 50vw;
-        max-width: 700px;
-        max-height: 700px;
+        width: 70vw; /* Breiter */
+        height: 90vh; /* Fast die ganze Höhe */
+        max-width: none;
+        max-height: none;
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
-        opacity: 0.25; /* Stärker sichtbar */
+        opacity: 0.25;
         filter: blur(0.5px);
         z-index: -1;
         pointer-events: none;
     }
     body::before {
-        left: 25%;
+        left: 15%;
     }
     body::after {
-        right: 25%;
+        right: 15%;
     }
 
     h1, h2 { text-align: center; margin-bottom: 15px; }
     /* Setup-Container */
     #setup { 
-        background: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.6); /* transparenter */
         padding: 20px; 
         border-radius: 12px; 
         max-width: 500px;
@@ -82,17 +82,15 @@
         gap: 8px;
     }
     #player-selection label { 
-        background: rgba(250, 250, 250, 0.6);
-        border: 1px solid #ddd;
-        padding: 8px 10px;
-        border-radius: 6px;
         cursor: pointer;
-        transition: background 0.3s;
         font-size: 1em;
+        padding: 4px 0; /* nur etwas Abstand, kein Rahmen */
     }
-    #player-selection label:hover {
-        background: rgba(224, 242, 241, 0.7);
+    #player-selection input[type="checkbox"] {
+        margin-right: 6px;
+        transform: scale(1.2);
     }
+
     button.start-btn {
         font-size: 1.3em; 
         padding: 12px 15px; 
@@ -353,7 +351,6 @@
         let wb = XLSX.utils.table_to_book(table, {sheet:"Statistik"});
         let ws = wb.Sheets["Statistik"];
 
-        /* Spaltenbreiten für A4 Querformat anpassen */
         let colWidths = Array.from({length: table.rows[0].cells.length}, () => ({ wch: 10 }));
         ws['!cols'] = colWidths;
 
