@@ -339,10 +339,38 @@
 
     function exportTableToExcel(tableID) {
         let table = document.getElementById(tableID);
-        let wb = XLSX.utils.table_to_book(table, {sheet:"Statistik"});
-        let ws = wb.Sheets["Statistik"];
-        let colWidths = Array.from({length: table.rows[0].cells.length}, () => ({ wch: 10 }));
-        ws['!cols'] = colWidths;
+        let wb = XLSX.utils.book_new();
+        let ws_data = [];
+
+        // Erste Kopfzeile
+        ws_data.push(["", ...Array(actionsPositive.length).fill("Positive Aktionen"), ...Array(actionsNegative.length).fill("Negative Aktionen")]);
+
+        // Zweite Kopfzeile
+        ws_data.push(["Spieler", ...actionsPositive, ...actionsNegative]);
+
+        // Datenzeilen
+        Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
+            let cells = Array.from(row.querySelectorAll("td")).map(td => td.textContent);
+            ws_data.push(cells);
+        });
+
+        let ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+        // Spaltenbreiten
+        ws['!cols'] = Array(ws_data[0].length).fill({ wch: 10 });
+
+        // Dicke Trennlinie zwischen positiven und negativen Aktionen
+        let separatorColIndex = actionsPositive.length; 
+        let range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = 0; R <= range.e.r; R++) {
+            let cellAddress = XLSX.utils.encode_cell({ r: R, c: separatorColIndex });
+            if (!ws[cellAddress]) continue;
+            if (!ws[cellAddress].s) ws[cellAddress].s = {};
+            if (!ws[cellAddress].s.border) ws[cellAddress].s.border = {};
+            ws[cellAddress].s.border.left = { style: "medium" };
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, "Statistik");
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
 
@@ -360,7 +388,6 @@
             styles: { halign: "center", cellPadding: 2, fontSize: 10 },
             startY: 20,
             didDrawCell: function (data) {
-                // Dicke Linie nach der "7M"-Spalte (letzte positive Aktion)
                 if (data.column.index === actionsPositive.length) {
                     let x = data.cell.x + data.cell.width;
                     data.doc.setDrawColor(0, 0, 0);
