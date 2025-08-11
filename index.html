@@ -11,134 +11,52 @@
 <meta http-equiv="Expires" content="0" />
 
 <style>
-    body { 
-        font-family: Arial, sans-serif; 
-        margin: 0;
-        background-color: #fff;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; background-color: #fff; }
     body::before, body::after {
-        content: "";
-        position: fixed;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 70vw;
-        height: 90vh;
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: contain;
-        opacity: 0.15;
-        filter: blur(0.5px);
-        z-index: -1;
-        pointer-events: none;
+        content: ""; position: fixed; top: 50%; transform: translateY(-50%);
+        width: 70vw; height: 90vh; background-repeat: no-repeat; background-position: center;
+        background-size: contain; opacity: 0.15; filter: blur(0.5px);
+        z-index: -1; pointer-events: none;
     }
     body::before { left: 15%; }
     body::after { right: 15%; }
-
     h1, h2 { text-align: center; margin-bottom: 15px; }
-    #setup { 
-        background: rgba(255, 255, 255, 0.6);
-        padding: 20px; 
-        border-radius: 12px; 
-        max-width: 500px;
-        margin: 30px auto;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    #setup { background: rgba(255, 255, 255, 0.6); padding: 20px; border-radius: 12px;
+        max-width: 500px; margin: 30px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    #opponent { 
-        font-size: 1.1em; 
-        padding: 12px; 
-        width: 100%; 
-        margin-bottom: 20px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: rgba(255,255,255,0.85);
+    #opponent, #teamSelect {
+        font-size: 1.1em; padding: 12px; width: 100%; margin-bottom: 20px;
+        border: 1px solid #ccc; border-radius: 8px; background-color: rgba(255,255,255,0.85);
         transition: border-color 0.3s, box-shadow 0.3s;
     }
-    #opponent:focus {
-        outline: none;
-        border-color: #009688;
-        box-shadow: 0 0 5px rgba(0,150,136,0.5);
+    #opponent:focus, #teamSelect:focus {
+        outline: none; border-color: #009688; box-shadow: 0 0 5px rgba(0,150,136,0.5);
     }
-    #player-selection { 
-        display: flex; 
-        gap: 10px;
-        flex-wrap: nowrap; 
-        justify-content: space-between;
-    }
-    #player-selection .column {
-        width: 48%;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    #player-selection label { 
-        cursor: pointer;
-        font-size: 1em;
-        padding: 4px 0;
-    }
+    #player-selection { display: flex; gap: 10px; flex-wrap: nowrap; justify-content: space-between; }
+    #player-selection .column { width: 48%; display: flex; flex-direction: column; gap: 8px; }
+    #player-selection label { cursor: pointer; font-size: 1em; padding: 4px 0; }
     #player-selection input[type="checkbox"] {
-        margin-right: 6px;
-        transform: scale(1.2);
+        margin-right: 6px; transform: scale(1.2);
     }
     .start-btn {
-        font-size: 1.3em; 
-        padding: 12px 15px; 
-        background: linear-gradient(90deg, #009688, #26a69a); 
-        color: white; 
-        border: none; 
-        border-radius: 8px; 
-        cursor: pointer;
-        width: 100%;
-        margin-top: 20px;
-        transition: background 0.3s, transform 0.1s;
+        font-size: 1.3em; padding: 12px 15px; background: linear-gradient(90deg, #009688, #26a69a);
+        color: white; border: none; border-radius: 8px; cursor: pointer;
+        width: 100%; margin-top: 20px; transition: background 0.3s, transform 0.1s;
     }
-    .start-btn:hover {
-        background: linear-gradient(90deg, #00796b, #26a69a);
+    .start-btn:hover { background: linear-gradient(90deg, #00796b, #26a69a); }
+    .start-btn:active { transform: scale(0.98); }
+    .player-card { border-radius: 8px; padding: 10px; margin: 10px; flex: 1; min-width: 250px;
+        background: white; box-shadow: 0 3px 8px rgba(0,0,0,0.05);
     }
-    .start-btn:active {
-        transform: scale(0.98);
-    }
-    .player-card { 
-        border-radius: 8px; 
-        padding: 10px; 
-        margin: 10px; 
-        flex: 1; 
-        min-width: 250px; 
-        background: white;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-    }
-    .player-name { 
-        font-weight: bold; 
-        font-size: 1.4em; 
-        text-align: center; 
-        margin-bottom: 10px; 
-    }
-    .grid { 
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 10px; 
-        justify-content: center; 
-        padding: 10px;
-    }
-    .btn { 
-        width: 48%; 
-        padding: 12px; 
-        margin: 2px 1%; 
-        border: none; 
-        cursor: pointer; 
-        font-size: 1em; 
-        border-radius: 6px; 
-        user-select: none;
+    .player-name { font-weight: bold; font-size: 1.4em; text-align: center; margin-bottom: 10px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 10px; }
+    .btn { width: 48%; padding: 12px; margin: 2px 1%; border: none; cursor: pointer;
+        font-size: 1em; border-radius: 6px; user-select: none;
     }
     .positive { background-color: #d4edda; }
     .negative { background-color: #f8d7da; }
     .full-width { width: 98%; }
-    table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin-top: 20px; 
-        background-color: white; 
-        font-size: 0.9em;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; font-size: 0.9em; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     th { background: #f0f0f0; }
     .thick-separator { border-left: 3px solid black !important; }
@@ -158,6 +76,13 @@
 <main id="setup">
     <h1>Willkommen!</h1>
     <input type="text" id="opponent" placeholder="Gegner eingeben">
+
+    <!-- Dropdown für Mannschaft -->
+    <select id="teamSelect">
+        <option value="Fux2">Fux2</option>
+        <option value="FuxA">FuxA</option>
+    </select>
+
     <section id="player-selection">
         <div class="column" id="col1"></div>
         <div class="column" id="col2"></div>
@@ -190,13 +115,25 @@
     const col1 = document.getElementById("col1");
     const col2 = document.getElementById("col2");
     const startBtn = document.getElementById("startBtn");
+    const teamSelect = document.getElementById("teamSelect");
 
-    const playerNames = [
-        "Julian Kusche", "Gabriel Kofler", "Lauro Pichiri", "Felix Bernkop-Schnürch", "Rune Laskowski",
-        "Lucas Mohr", "Navi Yatawarage", "William Reichardt", "Justin Wollny", "Jan Grüner",
-        "Dominik Kupiec", "Lennart Steltner", "Luca Thiel", "Tim Schröder", "Jonas Kofler",
-        "Till Braren", "Pius Joppich", "Norman Glamann", "Henning Lahuis", "Fritz Parke"
-    ];
+    // Spielerlisten für beide Teams
+    const teams = {
+        Fux2: [
+            "Julian Kusche", "Gabriel Kofler", "Lauro Pichiri", "Felix Bernkop-Schnürch", "Rune Laskowski",
+            "Lucas Mohr", "Navi Yatawarage", "William Reichardt", "Justin Wollny", "Jan Grüner",
+            "Dominik Kupiec", "Lennart Steltner", "Luca Thiel", "Tim Schröder", "Jonas Kofler",
+            "Till Braren", "Pius Joppich", "Norman Glamann", "Henning Lahuis", "Fritz Parke"
+        ],
+        FuxA: [
+            "Leo Nowak", "Simon Poppe", "Fritz Parke", "Fynn Paulicks", "Filip Dominikovic",
+            "Leo Tautenhahn", "Antonio", "Noah Skei", "Simon", "Albert Schmidt",
+            "Gabor Zeuch", "Christopher Losch", "Davide Bambini", "Tillman Stark", "Henning Lahuis",
+            "Ole Krake", "TW3"
+        ]
+    };
+
+    let playerNames = [...teams.Fux2]; // Standard: Fux2
 
     const actionsPositive = [
         { key: "KM_pos", label: "KM" },
@@ -222,17 +159,29 @@
     window.addEventListener("load", () => {
         document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
         document.styleSheets[0].cssRules[2].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
+        renderPlayerCheckboxes();
     });
 
-    for (let i = 0; i < 20; i++) {
-        const label = document.createElement("label");
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.value = i + 1;
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(` ${playerNames[i]}`));
-        (i < 10 ? col1 : col2).appendChild(label);
+    // Rendert die Checkboxen basierend auf aktueller Team-Auswahl
+    function renderPlayerCheckboxes() {
+        col1.innerHTML = "";
+        col2.innerHTML = "";
+        playerNames.forEach((name, i) => {
+            const label = document.createElement("label");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = i + 1;
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(` ${name}`));
+            (i < Math.ceil(playerNames.length / 2) ? col1 : col2).appendChild(label);
+        });
     }
+
+    // Ändert Spieler bei Teamwechsel
+    teamSelect.addEventListener("change", () => {
+        playerNames = [...teams[teamSelect.value]];
+        renderPlayerCheckboxes();
+    });
 
     function validateAndStart() {
         const opponent = document.getElementById("opponent").value.trim();
@@ -380,15 +329,16 @@
         doc.save(`${tableID}.pdf`);
     }
 
-    startBtn.addEventListener("click", validateAndStart);
     document.querySelectorAll("[data-export]").forEach(btn => {
         btn.addEventListener("click", () => {
-            const tableID = btn.getAttribute("data-table");
-            if (btn.dataset.export === "excel") exportTableToExcel(tableID);
-            if (btn.dataset.export === "pdf") exportTableToPDF(tableID);
+            if (btn.dataset.export === "excel") exportTableToExcel(btn.dataset.table);
+            else exportTableToPDF(btn.dataset.table);
         });
     });
+
+    startBtn.addEventListener("click", validateAndStart);
 })();
 </script>
+
 </body>
 </html>
