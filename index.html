@@ -28,6 +28,7 @@
         font-size: 1.1em; padding: 12px; width: 100%; margin-bottom: 20px;
         border: 1px solid #ccc; border-radius: 8px; background-color: rgba(255,255,255,0.85);
         transition: border-color 0.3s, box-shadow 0.3s;
+        color: black; /* Schriftfarbe Dropdown schwarz */
     }
     #opponent:focus, #teamSelect:focus {
         outline: none; border-color: #009688; box-shadow: 0 0 5px rgba(0,150,136,0.5);
@@ -38,6 +39,11 @@
     #player-selection input[type="checkbox"] {
         margin-right: 6px; transform: scale(1.2);
     }
+    .add-player-container { margin-top: 15px; display: flex; gap: 5px; }
+    .add-player-container input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    .add-player-container button { padding: 8px 12px; border: none; border-radius: 6px;
+        background-color: #009688; color: white; cursor: pointer; font-size: 1em; }
+    .add-player-container button:hover { background-color: #00796b; }
     .start-btn {
         font-size: 1.3em; padding: 12px 15px; background: linear-gradient(90deg, #009688, #26a69a);
         color: white; border: none; border-radius: 8px; cursor: pointer;
@@ -87,6 +93,13 @@
         <div class="column" id="col1"></div>
         <div class="column" id="col2"></div>
     </section>
+
+    <!-- + Spieler hinzufügen -->
+    <div class="add-player-container">
+        <input type="text" id="newPlayerName" placeholder="Spielername eingeben">
+        <button type="button" id="addPlayerBtn">+</button>
+    </div>
+
     <button class="start-btn" id="startBtn">Start</button>
 </main>
 
@@ -116,6 +129,8 @@
     const col2 = document.getElementById("col2");
     const startBtn = document.getElementById("startBtn");
     const teamSelect = document.getElementById("teamSelect");
+    const addPlayerBtn = document.getElementById("addPlayerBtn");
+    const newPlayerNameInput = document.getElementById("newPlayerName");
 
     // Spielerlisten für beide Teams
     const teams = {
@@ -123,7 +138,7 @@
             "Julian Kusche", "Gabriel Kofler", "Lauro Pichiri", "Felix Bernkop-Schnürch", "Rune Laskowski",
             "Lucas Mohr", "Navi Yatawarage", "William Reichardt", "Justin Wollny", "Jan Grüner",
             "Dominik Kupiec", "Lennart Steltner", "Luca Thiel", "Tim Schröder", "Jonas Kofler",
-            "Till Braren", "Pius Joppich", "Norman Glamann", "Henning Lahuis", "Fritz Parke"
+            "Till Braren", "Pius Joppich", "Norman Glamann"
         ],
         FuxA: [
             "Leo Nowak", "Simon Poppe", "Fritz Parke", "Fynn Paulicks", "Filip Dominikovic",
@@ -162,7 +177,6 @@
         renderPlayerCheckboxes();
     });
 
-    // Rendert die Checkboxen basierend auf aktueller Team-Auswahl
     function renderPlayerCheckboxes() {
         col1.innerHTML = "";
         col2.innerHTML = "";
@@ -177,10 +191,20 @@
         });
     }
 
-    // Ändert Spieler bei Teamwechsel
+    // Teamwechsel
     teamSelect.addEventListener("change", () => {
         playerNames = [...teams[teamSelect.value]];
         renderPlayerCheckboxes();
+    });
+
+    // Neuer Spieler hinzufügen
+    addPlayerBtn.addEventListener("click", () => {
+        const newName = newPlayerNameInput.value.trim();
+        if (newName) {
+            playerNames.push(newName);
+            renderPlayerCheckboxes();
+            newPlayerNameInput.value = "";
+        }
     });
 
     function validateAndStart() {
@@ -302,30 +326,14 @@
         });
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         ws['!cols'] = Array(ws_data[0].length).fill({ wch: 10 });
-        XLSX.utils.book_append_sheet(wb, ws, "Statistik");
+        XLSX.utils.book_append_sheet(wb, ws, "Stats");
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
 
     function exportTableToPDF(tableID) {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: "landscape" });
-        doc.setFontSize(16).setFont(undefined, "bold");
-        doc.text(document.getElementById("headline").innerText, 14, 15);
-        doc.autoTable({
-            html: `#${tableID}`,
-            theme: "grid",
-            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
-            styles: { halign: "center", cellPadding: 2, fontSize: 10 },
-            startY: 20,
-            didDrawCell: function (data) {
-                if (data.column.index === actionsPositive.length) {
-                    let x = data.cell.x + data.cell.width;
-                    data.doc.setDrawColor(0, 0, 0);
-                    data.doc.setLineWidth(1.5);
-                    data.doc.line(x, data.cell.y, x, data.cell.y + data.cell.height);
-                }
-            }
-        });
+        const doc = new jsPDF();
+        doc.autoTable({ html: `#${tableID}`, startY: 20, theme: 'grid' });
         doc.save(`${tableID}.pdf`);
     }
 
