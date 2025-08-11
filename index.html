@@ -17,35 +17,31 @@
         position: relative;
         background-color: #ffffff;
     }
-    /* Wasserzeichen im Hintergrund (größer für Setup) */
+    /* Wasserzeichen im Hintergrund (dezenter) */
     body::before, body::after {
         content: "";
         position: fixed;
         top: 50%;
         transform: translateY(-50%);
-        width: 70vw; /* Breiter */
-        height: 90vh; /* Fast die ganze Höhe */
+        width: 70vw;
+        height: 90vh;
         max-width: none;
         max-height: none;
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
-        opacity: 0.25;
+        opacity: 0.15; /* Dezenter */
         filter: blur(0.5px);
         z-index: -1;
         pointer-events: none;
     }
-    body::before {
-        left: 15%;
-    }
-    body::after {
-        right: 15%;
-    }
+    body::before { left: 15%; }
+    body::after { right: 15%; }
 
     h1, h2 { text-align: center; margin-bottom: 15px; }
     /* Setup-Container */
     #setup { 
-        background: rgba(255, 255, 255, 0.6); /* transparenter */
+        background: rgba(255, 255, 255, 0.6);
         padding: 20px; 
         border-radius: 12px; 
         max-width: 500px;
@@ -84,7 +80,7 @@
     #player-selection label { 
         cursor: pointer;
         font-size: 1em;
-        padding: 4px 0; /* nur etwas Abstand, kein Rahmen */
+        padding: 4px 0;
     }
     #player-selection input[type="checkbox"] {
         margin-right: 6px;
@@ -315,14 +311,14 @@
         let playerTable = "<table id='playerTable'><thead><tr><th rowspan='2'>Spieler</th>" +
             `<th colspan='${actionsPositive.length}'>Positive Aktionen</th>` +
             `<th colspan='${actionsNegative.length}'>Negative Aktionen</th></tr><tr>` +
-            actionsPositive.map((a, i) => `<th class='${i===actionsPositive.length-1 ? "thick-separator" : ""}'>${a}</th>`).join("") +
+            actionsPositive.map(a => `<th>${a}</th>`).join("") +
             actionsNegative.map((a,i) => `<th class='${i===0 ? "thick-separator" : ""}'>${a}</th>`).join("") +
             "</tr></thead><tbody>";
 
         Object.keys(playersData).forEach(num => {
             playerTable += `<tr><td><b>Spieler ${num}</b></td>` +
-                actionsPositive.map((a, i) => `<td class='${i===actionsPositive.length-1 ? "thick-separator" : ""}'><b>${playersData[num][a]}</b></td>`).join("") +
-                actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'><b>${playersData[num][a]}</b></td>`).join("") +
+                actionsPositive.map(a => `<td>${playersData[num][a]}</td>`).join("") +
+                actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${playersData[num][a]}</td>`).join("") +
                 "</tr>";
         });
         playerTable += "</tbody></table>";
@@ -331,7 +327,7 @@
         let teamTable = "<table id='teamTable'><thead><tr><th rowspan='2'>Team</th>" +
             `<th colspan='${actionsPositive.length}'>Positive Aktionen</th>` +
             `<th colspan='${actionsNegative.length}'>Negative Aktionen</th></tr><tr>` +
-            actionsPositive.map((a, i) => `<th class='${i===actionsPositive.length-1 ? "thick-separator" : ""}'>${a}</th>`).join("") +
+            actionsPositive.map(a => `<th>${a}</th>`).join("") +
             actionsNegative.map((a,i) => `<th class='${i===0 ? "thick-separator" : ""}'>${a}</th>`).join("") +
             "</tr></thead><tbody>";
 
@@ -340,8 +336,8 @@
         Object.values(playersData).forEach(p => Object.keys(p).forEach(a => sums[a] += p[a]));
 
         teamTable += `<tr><td><b>Gesamt</b></td>` +
-            actionsPositive.map((a, i) => `<td class='${i===actionsPositive.length-1 ? "thick-separator" : ""}'><b>${sums[a]}</b></td>`).join("") +
-            actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'><b>${sums[a]}</b></td>`).join("") +
+            actionsPositive.map(a => `<td>${sums[a]}</td>`).join("") +
+            actionsNegative.map((a,i) => `<td class='${i===0 ? "thick-separator" : ""}'>${sums[a]}</td>`).join("") +
             "</tr></tbody></table>";
         document.getElementById("teamStats").innerHTML = teamTable;
     }
@@ -371,11 +367,9 @@
             styles: { halign: "center", cellPadding: 2, fontSize: 10 },
             startY: 20,
             didParseCell: function (data) {
-                if (data.section === 'body' || data.section === 'head') {
-                    if (data.column.index === actionsPositive.length + 1) {
-                        data.cell.styles.borderLeft = 1.5;
-                        data.cell.styles.lineColor = [0, 0, 0];
-                    }
+                if ((data.section === 'body' || data.section === 'head') && data.column.index === actionsPositive.length + 1) {
+                    data.cell.styles.borderLeftWidth = 1.5;
+                    data.cell.styles.lineColor = [0, 0, 0];
                 }
             }
         });
