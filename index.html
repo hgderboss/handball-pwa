@@ -191,8 +191,25 @@
     const col2 = document.getElementById("col2");
     const startBtn = document.getElementById("startBtn");
 
-    const actionsPositive = ["KM", "DBR", "NAH", "FERN", "TGS", "7M"];
-    const actionsNegative = ["KM", "DBR", "NAH", "FERN", "TGS", "7M", "TF"];
+    // interne Schlüssel + Anzeige-Label trennen
+    const actionsPositive = [
+        { key: "KM_pos", label: "KM" },
+        { key: "DBR_pos", label: "DBR" },
+        { key: "NAH_pos", label: "NAH" },
+        { key: "FERN_pos", label: "FERN" },
+        { key: "TGS_pos", label: "TGS" },
+        { key: "7M_pos", label: "7M" }
+    ];
+    const actionsNegative = [
+        { key: "KM_neg", label: "KM" },
+        { key: "DBR_neg", label: "DBR" },
+        { key: "NAH_neg", label: "NAH" },
+        { key: "FERN_neg", label: "FERN" },
+        { key: "TGS_neg", label: "TGS" },
+        { key: "7M_neg", label: "7M" },
+        { key: "TF_neg", label: "TF" }
+    ];
+
     let playersData = {};
     let pressTimer, longPressActive, activeTouch;
 
@@ -238,7 +255,7 @@
 
         selectedPlayers.forEach(num => {
             playersData[num] = {};
-            [...actionsPositive, ...actionsNegative].forEach(a => playersData[num][a] = 0);
+            [...actionsPositive, ...actionsNegative].forEach(a => playersData[num][a.key] = 0);
 
             const card = document.createElement("div");
             card.className = "player-card";
@@ -250,14 +267,14 @@
             [...actionsPositive, ...actionsNegative].forEach((a, idx) => {
                 const btn = document.createElement("button");
                 btn.className = `btn ${idx < actionsPositive.length ? "positive" : "negative"}`;
-                if (a === "TF" && idx >= actionsPositive.length) btn.classList.add("full-width");
-                btn.textContent = `${a} (0)`;
+                if (a.key.startsWith("TF") && idx >= actionsPositive.length) btn.classList.add("full-width");
+                btn.textContent = `${a.label} (0)`;
 
                 const startPress = () => {
                     longPressActive = false;
                     pressTimer = setTimeout(() => {
-                        playersData[num][a] = Math.max(0, playersData[num][a] - 1);
-                        btn.textContent = `${a} (${playersData[num][a]})`;
+                        playersData[num][a.key] = Math.max(0, playersData[num][a.key] - 1);
+                        btn.textContent = `${a.label} (${playersData[num][a.key]})`;
                         updateTables();
                         longPressActive = true;
                     }, 500);
@@ -265,8 +282,8 @@
                 const endPress = () => {
                     clearTimeout(pressTimer);
                     if (!longPressActive) {
-                        playersData[num][a]++;
-                        btn.textContent = `${a} (${playersData[num][a]})`;
+                        playersData[num][a.key]++;
+                        btn.textContent = `${a.label} (${playersData[num][a.key]})`;
                         updateTables();
                     }
                 };
@@ -296,28 +313,28 @@
             let table = `<table id="${id}"><thead><tr><th rowspan="2">${header1}</th>` +
                 `<th colspan="${actionsPositive.length}">Positive Aktionen</th>` +
                 `<th colspan="${actionsNegative.length}">Negative Aktionen</th></tr><tr>` +
-                actionsPositive.map(a => `<th>${a}</th>`).join("") +
-                actionsNegative.map((a,i) => `<th class="${i===0 ? "thick-separator" : ""}">${a}</th>`).join("") +
+                actionsPositive.map(a => `<th>${a.label}</th>`).join("") +
+                actionsNegative.map((a,i) => `<th class="${i===0 ? "thick-separator" : ""}">${a.label}</th>`).join("") +
                 `</tr></thead><tbody>${data}</tbody></table>`;
             return table;
         };
 
         let playerRows = Object.keys(playersData).map(num =>
             `<tr><td><b>Spieler ${num}</b></td>` +
-            actionsPositive.map(a => `<td>${playersData[num][a]}</td>`).join("") +
-            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${playersData[num][a]}</td>`).join("")
+            actionsPositive.map(a => `<td>${playersData[num][a.key]}</td>`).join("") +
+            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${playersData[num][a.key]}</td>`).join("")
         ).join("");
-        document.getElementById("playerStats").innerHTML = buildTable("playerTable", "Spieler", actionsPositive.concat(actionsNegative), playerRows);
+        document.getElementById("playerStats").innerHTML = buildTable("playerTable", "Spieler", null, playerRows);
 
         let sums = {};
-        [...actionsPositive, ...actionsNegative].forEach(a => sums[a] = 0);
-        Object.values(playersData).forEach(p => Object.keys(p).forEach(a => sums[a] += p[a]));
+        [...actionsPositive, ...actionsNegative].forEach(a => sums[a.key] = 0);
+        Object.values(playersData).forEach(p => Object.keys(p).forEach(k => sums[k] += p[k]));
 
         let teamRow = `<tr><td><b>Gesamt</b></td>` +
-            actionsPositive.map(a => `<td>${sums[a]}</td>`).join("") +
-            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${sums[a]}</td>`).join("") +
+            actionsPositive.map(a => `<td>${sums[a.key]}</td>`).join("") +
+            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${sums[a.key]}</td>`).join("") +
             "</tr>";
-        document.getElementById("teamStats").innerHTML = buildTable("teamTable", "Team", actionsPositive.concat(actionsNegative), teamRow);
+        document.getElementById("teamStats").innerHTML = buildTable("teamTable", "Team", null, teamRow);
     }
 
     function exportTableToExcel(tableID) {
@@ -325,7 +342,7 @@
         const wb = XLSX.utils.book_new();
         const ws_data = [
             ["", ...Array(actionsPositive.length).fill("Positive Aktionen"), ...Array(actionsNegative.length).fill("Negative Aktionen")],
-            ["Spieler", ...actionsPositive, ...actionsNegative]
+            ["Spieler", ...actionsPositive.map(a => a.label), ...actionsNegative.map(a => a.label)]
         ];
         Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
             ws_data.push(Array.from(row.querySelectorAll("td")).map(td => td.textContent));
