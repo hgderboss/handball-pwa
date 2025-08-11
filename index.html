@@ -191,7 +191,13 @@
     const col2 = document.getElementById("col2");
     const startBtn = document.getElementById("startBtn");
 
-    // interne Schlüssel + Anzeige-Label trennen
+    const playerNames = [
+        "Julian Kusche", "Gabriel Kofler", "Lauro Pichiri", "Felix Bernkop-Schnürch", "Rune Laskowski",
+        "Lucas Mohr", "Navi Yatawarage", "William Reichardt", "Justin Wollny", "Jan Grüner",
+        "Dominik Kupiec", "Lennart Steltner", "Luca Thiel", "Tim Schröder", "Jonas Kofler",
+        "Till Braren", "Pius Joppich", "Norman Glamann", "Henning Lahuis", "Fritz Parke"
+    ];
+
     const actionsPositive = [
         { key: "KM_pos", label: "KM" },
         { key: "DBR_pos", label: "DBR" },
@@ -213,21 +219,19 @@
     let playersData = {};
     let pressTimer, longPressActive, activeTouch;
 
-    // Logo-Hintergrund setzen
     window.addEventListener("load", () => {
         document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
         document.styleSheets[0].cssRules[2].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
     });
 
-    // Spieler-Checkboxen generieren
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 0; i < 20; i++) {
         const label = document.createElement("label");
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.value = i;
+        checkbox.value = i + 1;
         label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(` Spieler ${i}`));
-        (i <= 10 ? col1 : col2).appendChild(label);
+        label.appendChild(document.createTextNode(` ${playerNames[i]}`));
+        (i < 10 ? col1 : col2).appendChild(label);
     }
 
     function validateAndStart() {
@@ -261,7 +265,7 @@
             card.className = "player-card";
             const nameDiv = document.createElement("div");
             nameDiv.className = "player-name";
-            nameDiv.textContent = `Spieler ${num}`;
+            nameDiv.textContent = playerNames[num - 1];
             card.appendChild(nameDiv);
 
             [...actionsPositive, ...actionsNegative].forEach((a, idx) => {
@@ -320,7 +324,7 @@
         };
 
         let playerRows = Object.keys(playersData).map(num =>
-            `<tr><td><b>Spieler ${num}</b></td>` +
+            `<tr><td><b>${playerNames[num - 1]}</b></td>` +
             actionsPositive.map(a => `<td>${playersData[num][a.key]}</td>`).join("") +
             actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${playersData[num][a.key]}</td>`).join("")
         ).join("");
