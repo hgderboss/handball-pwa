@@ -248,19 +248,24 @@
             styles: { lineWidth: 0.2, lineColor: [0,0,0], halign: 'center', valign: 'middle' },
             headStyles: { fillColor: [240,240,240], textColor: 0, lineWidth: 0.2, lineColor: [0,0,0] },
             bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: [0,0,0] },
-            columnStyles: { [actionsPositive.length + 1]: { lineWidth: {left: 0.8}, lineColor: {left: [0,0,0]} } },
-            margin: {top: 10, left: 10, right: 10, bottom: 10},
-            tableWidth: 'auto'
+            columnStyles: { 
+                [actionsPositive.length + 1]: { lineWidth: {left: 0.8}, lineColor: {left: [0,0,0]} }, // Trennlinie
+                [actionsPositive.length + 1]: { lineWidth: {top: 0.2, right: 0.2, bottom: 0.2, left: 0.8}, lineColor: {left: [0,0,0]} }
+            },
+            didDrawPage: (data) => {
+                doc.setFontSize(10);
+                doc.text(`Erstellt am: ${new Date().toLocaleString()}`, 14, 200);
+            }
         });
         doc.save(`${tableID}.pdf`);
     }
 
-    document.querySelectorAll("[data-export]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const type = btn.dataset.export;
-            const tableID = btn.dataset.table;
-            if (type === "excel") exportTableToExcel(tableID);
-            else if (type === "pdf") exportTableToPDF(tableID);
+    document.querySelectorAll("button[data-export]").forEach(btn => {
+        btn.addEventListener("click", e => {
+            const type = e.target.getAttribute("data-export");
+            const table = e.target.getAttribute("data-table");
+            if (type === "excel") exportTableToExcel(table);
+            if (type === "pdf") exportTableToPDF(table);
         });
     });
 
