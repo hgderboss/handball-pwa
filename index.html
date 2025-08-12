@@ -64,6 +64,18 @@
     .thick-separator { border-left: 3px solid black !important; }
     .export-buttons { margin-top: 20px; text-align: center; }
     .hidden { display: none; }
+    .finish-btn {
+        font-size: 1.2em;
+        padding: 10px 20px;
+        margin: 20px auto;
+        display: block;
+        background: #ff9800;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .finish-btn:hover { background: #e68900; }
 </style>
 </head>
 <body>
@@ -106,6 +118,9 @@
 </div>
 <div id="teamStats"></div>
 
+<!-- Neuer Button zum Abschließen -->
+<button id="finishGameBtn" class="finish-btn hidden">Spiel abschließen</button>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -120,9 +135,11 @@
     const addPlayerBtn = document.getElementById("addPlayerBtn");
     const newPlayerNameInput = document.getElementById("newPlayerName");
     const archiveSelect = document.getElementById("archiveSelect");
+    const finishBtn = document.getElementById("finishGameBtn");
 
     let currentOpponent = "";
     let currentTeam = "";
+    let gameFinished = false;
 
     const teams = {
         Fux2: ["Julian Kusche","Gabriel Kofler","Lauro Pichiri","Felix Bernkop-Schnürch","Rune Laskowski","Lucas Mohr","Navi Yatawarage","William Reichardt","Justin Wollny","Jan Grüner","Dominik Kupiec","Lennart Steltner","Luca Thiel","Tim Schröder","Jonas Kofler","Till Braren","Pius Joppich","Norman Glamann"],
@@ -182,6 +199,7 @@
             document.getElementById("headline").classList.remove("hidden");
             document.getElementById("playerExport").classList.remove("hidden");
             document.getElementById("teamExport").classList.remove("hidden");
+            finishBtn.classList.add("hidden");
             updateTables();
         }
     });
@@ -198,6 +216,7 @@
         }
         currentOpponent = opponent;
         currentTeam = teamSelect.value;
+        gameFinished = false;
         startGame(opponent, selected.map(cb => parseInt(cb.value)));
     }
 
@@ -207,6 +226,8 @@
         document.getElementById("headline").classList.remove("hidden");
         document.getElementById("playerExport").classList.remove("hidden");
         document.getElementById("teamExport").classList.remove("hidden");
+        finishBtn.classList.remove("hidden");
+
         const playersDiv = document.getElementById("players");
         playersDiv.innerHTML = "";
         selectedPlayers.forEach(num => {
@@ -256,44 +277,32 @@
         document.getElementById("playerStats").innerHTML = buildTable("playerTable", "Spieler", null, playerRows);
         let sums = {}; [...actionsPositive, ...actionsNegative].forEach(a => sums[a.key] = 0);
         Object.values(playersData).forEach(p => Object.keys(p).forEach(k => sums[k] += p[k]));
-        let teamRow = `<tr><td><b>Gesamt</b></td>` +
+        document.getElementById("teamStats").innerHTML = buildTable("teamTable", "Team", null,
+            `<tr><td><b>${currentTeam}</b></td>` +
             actionsPositive.map(a => `<td>${sums[a.key]}</td>`).join("") +
-            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${sums[a.key]}</td>`).join("") + "</tr>";
-        document.getElementById("teamStats").innerHTML = buildTable("teamTable", "Team", null, teamRow);
+            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${sums[a.key]}</td>`).join("") +
+            `</tr>`);
     }
 
     function saveGame() {
-        const archive = JSON.parse(localStorage.getItem("handballArchive") || "[]");
-        const existingIndex = archive.findIndex(g => g.team === currentTeam && g.opponent === currentOpponent);
-        const gameData = { team: currentTeam, opponent: currentOpponent, data: playersData };
-        if (existingIndex >= 0) archive[existingIndex] = gameData; else archive.push(gameData);
-        localStorage.setItem("handballArchive", JSON.stringify(archive));
-        loadArchive();
+        if (!currentOpponent || !currentTeam) return;
+        localStorage.setItem("currentGame", JSON.stringify({
+            opponent: currentOpponent, team: currentTeam, data: playersData, finished: gameFinished
+        }));
     }
 
-    startBtn.addEventListener("click", validateAndStart);
-
-    document.querySelectorAll("[data-export]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const type = btn.dataset.export;
-            const tableId = btn.dataset.table;
-            if (type === "excel") exportTableToExcel(tableId);
-            else exportTableToPDF(tableId);
-        });
+    finishBtn.addEventListener("click", () => {
+        gameFinished = true;
+        const archive = JSON.parse(localStorage.getItem("handballArchive") || "[]");
+        archive.push({ opponent: currentOpponent, team: currentTeam, data: playersData, date: new Date().toISOString() });
+        localStorage.setItem("handballArchive", JSON.stringify(archive));
+        localStorage.removeItem("currentGame");
+        loadArchive();
+        alert("Spiel ins Archiv verschoben.");
+        location.reload();
     });
 
-    function exportTableToExcel(tableId) {
-        const table = document.getElementById(tableId);
-        const wb = XLSX.utils.table_to_book(table, { sheet: "Statistik" });
-        XLSX.writeFile(wb, `${tableId}_${currentTeam}_vs_${currentOpponent}.xlsx`);
-    }
-
-    function exportTableToPDF(tableId) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.autoTable({ html: `#${tableId}` });
-        doc.save(`${tableId}_${currentTeam}_vs_${currentOpponent}.pdf`);
-    }
+    startBtn.addEventListener("click", validateAndStart);
 })();
 </script>
 </body>
