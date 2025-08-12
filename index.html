@@ -28,7 +28,7 @@
         font-size: 1.1em; padding: 12px; width: 100%; margin-bottom: 20px;
         border: 1px solid #ccc; border-radius: 8px; background-color: rgba(255,255,255,0.85);
         transition: border-color 0.3s, box-shadow 0.3s;
-        color: black; /* Schriftfarbe Dropdown schwarz */
+        color: black;
     }
     #opponent:focus, #teamSelect:focus {
         outline: none; border-color: #009688; box-shadow: 0 0 5px rgba(0,150,136,0.5);
@@ -82,24 +82,18 @@
 <main id="setup">
     <h1>Willkommen!</h1>
     <input type="text" id="opponent" placeholder="Gegner eingeben">
-
-    <!-- Dropdown für Mannschaft -->
     <select id="teamSelect">
         <option value="Fux2">Fux2</option>
         <option value="FuxA">FuxA</option>
     </select>
-
     <section id="player-selection">
         <div class="column" id="col1"></div>
         <div class="column" id="col2"></div>
     </section>
-
-    <!-- + Spieler hinzufügen -->
     <div class="add-player-container">
         <input type="text" id="newPlayerName" placeholder="Spielername eingeben">
         <button type="button" id="addPlayerBtn">+</button>
     </div>
-
     <button class="start-btn" id="startBtn">Start</button>
 </main>
 
@@ -132,41 +126,14 @@
     const addPlayerBtn = document.getElementById("addPlayerBtn");
     const newPlayerNameInput = document.getElementById("newPlayerName");
 
-    // Spielerlisten für beide Teams
     const teams = {
-        Fux2: [
-            "Julian Kusche", "Gabriel Kofler", "Lauro Pichiri", "Felix Bernkop-Schnürch", "Rune Laskowski",
-            "Lucas Mohr", "Navi Yatawarage", "William Reichardt", "Justin Wollny", "Jan Grüner",
-            "Dominik Kupiec", "Lennart Steltner", "Luca Thiel", "Tim Schröder", "Jonas Kofler",
-            "Till Braren", "Pius Joppich", "Norman Glamann"
-        ],
-        FuxA: [
-            "Leo Nowak", "Simon Poppe", "Fritz Parke", "Fynn Paulicks", "Filip Dominikovic",
-            "Leo Tautenhahn", "Antonio", "Noah Skei", "Simon", "Albert Schmidt",
-            "Gabor Zeuch", "Christopher Losch", "Davide Bambini", "Tillman Stark", "Henning Lahuis",
-            "Ole Krake", "TW3"
-        ]
+        Fux2: ["Julian Kusche","Gabriel Kofler","Lauro Pichiri","Felix Bernkop-Schnürch","Rune Laskowski","Lucas Mohr","Navi Yatawarage","William Reichardt","Justin Wollny","Jan Grüner","Dominik Kupiec","Lennart Steltner","Luca Thiel","Tim Schröder","Jonas Kofler","Till Braren","Pius Joppich","Norman Glamann"],
+        FuxA: ["Leo Nowak","Simon Poppe","Fritz Parke","Fynn Paulicks","Filip Dominikovic","Leo Tautenhahn","Antonio","Noah Skei","Simon","Albert Schmidt","Gabor Zeuch","Christopher Losch","Davide Bambini","Tillman Stark","Henning Lahuis","Ole Krake","TW3"]
     };
 
-    let playerNames = [...teams.Fux2]; // Standard: Fux2
-
-    const actionsPositive = [
-        { key: "KM_pos", label: "KM" },
-        { key: "DBR_pos", label: "DBR" },
-        { key: "NAH_pos", label: "NAH" },
-        { key: "FERN_pos", label: "FERN" },
-        { key: "TGS_pos", label: "TGS" },
-        { key: "7M_pos", label: "7M" }
-    ];
-    const actionsNegative = [
-        { key: "KM_neg", label: "KM" },
-        { key: "DBR_neg", label: "DBR" },
-        { key: "NAH_neg", label: "NAH" },
-        { key: "FERN_neg", label: "FERN" },
-        { key: "TGS_neg", label: "TGS" },
-        { key: "7M_neg", label: "7M" },
-        { key: "TF_neg", label: "TF" }
-    ];
+    let playerNames = [...teams.Fux2];
+    const actionsPositive = [{key:"KM_pos",label:"KM"},{key:"DBR_pos",label:"DBR"},{key:"NAH_pos",label:"NAH"},{key:"FERN_pos",label:"FERN"},{key:"TGS_pos",label:"TGS"},{key:"7M_pos",label:"7M"}];
+    const actionsNegative = [{key:"KM_neg",label:"KM"},{key:"DBR_neg",label:"DBR"},{key:"NAH_neg",label:"NAH"},{key:"FERN_neg",label:"FERN"},{key:"TGS_neg",label:"TGS"},{key:"7M_neg",label:"7M"},{key:"TF_neg",label:"TF"}];
 
     let playersData = {};
     let pressTimer, longPressActive, activeTouch;
@@ -178,46 +145,28 @@
     });
 
     function renderPlayerCheckboxes() {
-        col1.innerHTML = "";
-        col2.innerHTML = "";
-        playerNames.forEach((name, i) => {
+        col1.innerHTML = ""; col2.innerHTML = "";
+        playerNames.forEach((name,i) => {
             const label = document.createElement("label");
             const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.value = i + 1;
+            checkbox.type = "checkbox"; checkbox.value = i + 1;
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(` ${name}`));
             (i < Math.ceil(playerNames.length / 2) ? col1 : col2).appendChild(label);
         });
     }
 
-    // Teamwechsel
-    teamSelect.addEventListener("change", () => {
-        playerNames = [...teams[teamSelect.value]];
-        renderPlayerCheckboxes();
-    });
-
-    // Neuer Spieler hinzufügen
-    addPlayerBtn.addEventListener("click", () => {
-        const newName = newPlayerNameInput.value.trim();
-        if (newName) {
-            playerNames.push(newName);
-            renderPlayerCheckboxes();
-            newPlayerNameInput.value = "";
-        }
-    });
+    teamSelect.addEventListener("change", () => { playerNames = [...teams[teamSelect.value]]; renderPlayerCheckboxes(); });
+    addPlayerBtn.addEventListener("click", () => { const n = newPlayerNameInput.value.trim(); if(n){ playerNames.push(n); renderPlayerCheckboxes(); newPlayerNameInput.value=""; }});
 
     function validateAndStart() {
         const opponent = document.getElementById("opponent").value.trim();
-        const selectedPlayers = Array.from(document.querySelectorAll("#player-selection input:checked"));
-        let errors = [];
-        if (!opponent) errors.push("Gegner eingeben");
-        if (selectedPlayers.length < 7) errors.push("Mindestens 7 Spieler auswählen");
-        if (errors.length) {
-            alert("Bitte korrigieren:\n- " + errors.join("\n- "));
+        const selected = Array.from(document.querySelectorAll("#player-selection input:checked"));
+        if (!opponent || selected.length < 7) {
+            alert("Bitte korrigieren:\n- Gegner eingeben\n- Mindestens 7 Spieler auswählen");
             return;
         }
-        startGame(opponent, selectedPlayers.map(cb => parseInt(cb.value)));
+        startGame(opponent, selected.map(cb => parseInt(cb.value)));
     }
 
     function startGame(opponent, selectedPlayers) {
@@ -226,59 +175,31 @@
         document.getElementById("headline").classList.remove("hidden");
         document.getElementById("playerExport").classList.remove("hidden");
         document.getElementById("teamExport").classList.remove("hidden");
-
         const playersDiv = document.getElementById("players");
         playersDiv.innerHTML = "";
-
         selectedPlayers.forEach(num => {
             playersData[num] = {};
             [...actionsPositive, ...actionsNegative].forEach(a => playersData[num][a.key] = 0);
-
             const card = document.createElement("div");
             card.className = "player-card";
             const nameDiv = document.createElement("div");
-            nameDiv.className = "player-name";
-            nameDiv.textContent = playerNames[num - 1];
+            nameDiv.className = "player-name"; nameDiv.textContent = playerNames[num - 1];
             card.appendChild(nameDiv);
-
             [...actionsPositive, ...actionsNegative].forEach((a, idx) => {
                 const btn = document.createElement("button");
                 btn.className = `btn ${idx < actionsPositive.length ? "positive" : "negative"}`;
                 if (a.key.startsWith("TF") && idx >= actionsPositive.length) btn.classList.add("full-width");
                 btn.textContent = `${a.label} (0)`;
-
-                const startPress = () => {
-                    longPressActive = false;
-                    pressTimer = setTimeout(() => {
-                        playersData[num][a.key] = Math.max(0, playersData[num][a.key] - 1);
-                        btn.textContent = `${a.label} (${playersData[num][a.key]})`;
-                        updateTables();
-                        longPressActive = true;
-                    }, 500);
-                };
-                const endPress = () => {
-                    clearTimeout(pressTimer);
-                    if (!longPressActive) {
-                        playersData[num][a.key]++;
-                        btn.textContent = `${a.label} (${playersData[num][a.key]})`;
-                        updateTables();
-                    }
-                };
+                const startPress = () => { longPressActive = false; pressTimer = setTimeout(() => { playersData[num][a.key] = Math.max(0, playersData[num][a.key] - 1); btn.textContent = `${a.label} (${playersData[num][a.key]})`; updateTables(); longPressActive = true; }, 500); };
+                const endPress = () => { clearTimeout(pressTimer); if (!longPressActive) { playersData[num][a.key]++; btn.textContent = `${a.label} (${playersData[num][a.key]})`; updateTables(); }};
                 btn.addEventListener("mousedown", e => { if (!activeTouch) startPress(); });
                 btn.addEventListener("mouseup", e => { if (!activeTouch) endPress(); });
                 btn.addEventListener("mouseleave", () => clearTimeout(pressTimer));
                 btn.addEventListener("touchstart", e => { activeTouch = true; startPress(); e.preventDefault(); });
                 btn.addEventListener("touchend", e => { endPress(); setTimeout(() => activeTouch = false, 300); e.preventDefault(); });
                 btn.addEventListener("touchcancel", () => clearTimeout(pressTimer));
-
                 card.appendChild(btn);
-
-                if (idx === actionsPositive.length - 1) {
-                    const sep = document.createElement("div");
-                    sep.style.borderBottom = "3px solid black";
-                    sep.style.margin = "5px 0";
-                    card.appendChild(sep);
-                }
+                if (idx === actionsPositive.length - 1) { const sep = document.createElement("div"); sep.style.borderBottom = "3px solid black"; sep.style.margin = "5px 0"; card.appendChild(sep); }
             });
             playersDiv.appendChild(card);
         });
@@ -287,66 +208,64 @@
 
     function updateTables() {
         const buildTable = (id, header1, header2, data) => {
-            let table = `<table id="${id}"><thead><tr><th rowspan="2">${header1}</th>` +
+            return `<table id="${id}"><thead><tr><th rowspan="2">${header1}</th>` +
                 `<th colspan="${actionsPositive.length}">Positive Aktionen</th>` +
                 `<th colspan="${actionsNegative.length}">Negative Aktionen</th></tr><tr>` +
                 actionsPositive.map(a => `<th>${a.label}</th>`).join("") +
                 actionsNegative.map((a,i) => `<th class="${i===0 ? "thick-separator" : ""}">${a.label}</th>`).join("") +
                 `</tr></thead><tbody>${data}</tbody></table>`;
-            return table;
         };
-
         let playerRows = Object.keys(playersData).map(num =>
             `<tr><td><b>${playerNames[num - 1]}</b></td>` +
             actionsPositive.map(a => `<td>${playersData[num][a.key]}</td>`).join("") +
             actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${playersData[num][a.key]}</td>`).join("")
         ).join("");
         document.getElementById("playerStats").innerHTML = buildTable("playerTable", "Spieler", null, playerRows);
-
-        let sums = {};
-        [...actionsPositive, ...actionsNegative].forEach(a => sums[a.key] = 0);
+        let sums = {}; [...actionsPositive, ...actionsNegative].forEach(a => sums[a.key] = 0);
         Object.values(playersData).forEach(p => Object.keys(p).forEach(k => sums[k] += p[k]));
-
         let teamRow = `<tr><td><b>Gesamt</b></td>` +
             actionsPositive.map(a => `<td>${sums[a.key]}</td>`).join("") +
-            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${sums[a.key]}</td>`).join("") +
-            "</tr>";
+            actionsNegative.map((a,i) => `<td class="${i===0 ? "thick-separator" : ""}">${sums[a.key]}</td>`).join("") + "</tr>";
         document.getElementById("teamStats").innerHTML = buildTable("teamTable", "Team", null, teamRow);
     }
 
     function exportTableToExcel(tableID) {
         const table = document.getElementById(tableID);
         const wb = XLSX.utils.book_new();
-        const ws_data = [
-            ["", ...Array(actionsPositive.length).fill("Positive Aktionen"), ...Array(actionsNegative.length).fill("Negative Aktionen")],
-            ["Spieler", ...actionsPositive.map(a => a.label), ...actionsNegative.map(a => a.label)]
-        ];
-        Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
-            ws_data.push(Array.from(row.querySelectorAll("td")).map(td => td.textContent));
-        });
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        ws['!cols'] = Array(ws_data[0].length).fill({ wch: 10 });
+        const ws = XLSX.utils.table_to_sheet(table, {raw: true});
+        ws['!cols'] = Array(table.rows[0].cells.length).fill({wch: 12});
+        ws['!margins'] = {left:0.25, right:0.25, top:0.75, bottom:0.75};
         XLSX.utils.book_append_sheet(wb, ws, "Stats");
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
 
     function exportTableToPDF(tableID) {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.autoTable({ html: `#${tableID}`, startY: 20, theme: 'grid' });
+        const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+        doc.autoTable({
+            html: `#${tableID}`,
+            theme: 'grid',
+            styles: { lineWidth: 0.2, lineColor: [0,0,0], halign: 'center', valign: 'middle' },
+            headStyles: { fillColor: [240,240,240], textColor: 0, lineWidth: 0.2, lineColor: [0,0,0] },
+            bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: [0,0,0] },
+            columnStyles: { [actionsPositive.length + 1]: { lineWidth: {left: 0.8}, lineColor: {left: [0,0,0]} } },
+            margin: {top: 10, left: 10, right: 10, bottom: 10},
+            tableWidth: 'auto'
+        });
         doc.save(`${tableID}.pdf`);
     }
 
     document.querySelectorAll("[data-export]").forEach(btn => {
         btn.addEventListener("click", () => {
-            if (btn.dataset.export === "excel") exportTableToExcel(btn.dataset.table);
-            else exportTableToPDF(btn.dataset.table);
+            const type = btn.dataset.export;
+            const tableID = btn.dataset.table;
+            if (type === "excel") exportTableToExcel(tableID);
+            else if (type === "pdf") exportTableToPDF(tableID);
         });
     });
 
     startBtn.addEventListener("click", validateAndStart);
 })();
 </script>
-
 </body>
 </html>
