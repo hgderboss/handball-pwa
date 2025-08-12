@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Handball Statistik</title>
-
-<!-- Cache verhindern -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
@@ -24,21 +22,19 @@
     #setup { background: rgba(255, 255, 255, 0.6); padding: 20px; border-radius: 12px;
         max-width: 500px; margin: 30px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    #opponent, #teamSelect {
+    #opponent, #teamSelect, #archiveSelect {
         font-size: 1.1em; padding: 12px; width: 100%; margin-bottom: 20px;
         border: 1px solid #ccc; border-radius: 8px; background-color: rgba(255,255,255,0.85);
         transition: border-color 0.3s, box-shadow 0.3s;
         color: black;
     }
-    #opponent:focus, #teamSelect:focus {
+    #opponent:focus, #teamSelect:focus, #archiveSelect:focus {
         outline: none; border-color: #009688; box-shadow: 0 0 5px rgba(0,150,136,0.5);
     }
     #player-selection { display: flex; gap: 10px; flex-wrap: nowrap; justify-content: space-between; }
     #player-selection .column { width: 48%; display: flex; flex-direction: column; gap: 8px; }
     #player-selection label { cursor: pointer; font-size: 1em; padding: 4px 0; }
-    #player-selection input[type="checkbox"] {
-        margin-right: 6px; transform: scale(1.2);
-    }
+    #player-selection input[type="checkbox"] { margin-right: 6px; transform: scale(1.2); }
     .add-player-container { margin-top: 15px; display: flex; gap: 5px; }
     .add-player-container input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
     .add-player-container button { padding: 8px 12px; border: none; border-radius: 6px;
@@ -68,13 +64,6 @@
     .thick-separator { border-left: 3px solid black !important; }
     .export-buttons { margin-top: 20px; text-align: center; }
     .hidden { display: none; }
-    @media (max-width: 768px) {
-        .btn { width: 100%; font-size: 0.95em; padding: 10px; }
-        .player-card { min-width: unset; width: 100%; }
-        #player-selection { flex-direction: column; }
-        #player-selection .column { width: 100%; }
-        table { font-size: 0.8em; }
-    }
 </style>
 </head>
 <body>
@@ -86,6 +75,11 @@
         <option value="Fux2">Fux2</option>
         <option value="FuxA">FuxA</option>
     </select>
+
+    <select id="archiveSelect">
+        <option value="">Archivierte Spiele anzeigen...</option>
+    </select>
+
     <section id="player-selection">
         <div class="column" id="col1"></div>
         <div class="column" id="col2"></div>
@@ -125,8 +119,10 @@
     const teamSelect = document.getElementById("teamSelect");
     const addPlayerBtn = document.getElementById("addPlayerBtn");
     const newPlayerNameInput = document.getElementById("newPlayerName");
+    const archiveSelect = document.getElementById("archiveSelect");
 
     let currentOpponent = "";
+    let currentTeam = "";
 
     const teams = {
         Fux2: ["Julian Kusche","Gabriel Kofler","Lauro Pichiri","Felix Bernkop-Schnürch","Rune Laskowski","Lucas Mohr","Navi Yatawarage","William Reichardt","Justin Wollny","Jan Grüner","Dominik Kupiec","Lennart Steltner","Luca Thiel","Tim Schröder","Jonas Kofler","Till Braren","Pius Joppich","Norman Glamann"],
@@ -144,6 +140,7 @@
         document.styleSheets[0].cssRules[1].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
         document.styleSheets[0].cssRules[2].style.backgroundImage = `url('logo.png.JPG?cb=${cb}')`;
         renderPlayerCheckboxes();
+        loadArchive();
     });
 
     function renderPlayerCheckboxes() {
@@ -158,6 +155,37 @@
         });
     }
 
+    function loadArchive() {
+        archiveSelect.innerHTML = `<option value="">Archivierte Spiele anzeigen...</option>`;
+        const archive = JSON.parse(localStorage.getItem("handballArchive") || "[]");
+        archive.forEach(game => {
+            const opt = document.createElement("option");
+            opt.value = `${game.team}|${game.opponent}`;
+            opt.textContent = `${game.team} vs ${game.opponent}`;
+            archiveSelect.appendChild(opt);
+        });
+    }
+
+    archiveSelect.addEventListener("change", () => {
+        const val = archiveSelect.value;
+        if (!val) return;
+        const [team, opponent] = val.split("|");
+        const archive = JSON.parse(localStorage.getItem("handballArchive") || "[]");
+        const game = archive.find(g => g.team === team && g.opponent === opponent);
+        if (game) {
+            playersData = game.data;
+            playerNames = [...teams[team]];
+            currentTeam = team;
+            currentOpponent = opponent;
+            document.getElementById("headline").innerText = `Archiv: ${team} vs ${opponent}`;
+            document.getElementById("setup").classList.add("hidden");
+            document.getElementById("headline").classList.remove("hidden");
+            document.getElementById("playerExport").classList.remove("hidden");
+            document.getElementById("teamExport").classList.remove("hidden");
+            updateTables();
+        }
+    });
+
     teamSelect.addEventListener("change", () => { playerNames = [...teams[teamSelect.value]]; renderPlayerCheckboxes(); });
     addPlayerBtn.addEventListener("click", () => { const n = newPlayerNameInput.value.trim(); if(n){ playerNames.push(n); renderPlayerCheckboxes(); newPlayerNameInput.value=""; }});
 
@@ -169,6 +197,7 @@
             return;
         }
         currentOpponent = opponent;
+        currentTeam = teamSelect.value;
         startGame(opponent, selected.map(cb => parseInt(cb.value)));
     }
 
@@ -193,8 +222,8 @@
                 btn.className = `btn ${idx < actionsPositive.length ? "positive" : "negative"}`;
                 if (a.key.startsWith("TF") && idx >= actionsPositive.length) btn.classList.add("full-width");
                 btn.textContent = `${a.label} (0)`;
-                const startPress = () => { longPressActive = false; pressTimer = setTimeout(() => { playersData[num][a.key] = Math.max(0, playersData[num][a.key] - 1); btn.textContent = `${a.label} (${playersData[num][a.key]})`; updateTables(); longPressActive = true; }, 500); };
-                const endPress = () => { clearTimeout(pressTimer); if (!longPressActive) { playersData[num][a.key]++; btn.textContent = `${a.label} (${playersData[num][a.key]})`; updateTables(); }};
+                const startPress = () => { longPressActive = false; pressTimer = setTimeout(() => { playersData[num][a.key] = Math.max(0, playersData[num][a.key] - 1); btn.textContent = `${a.label} (${playersData[num][a.key]})`; updateTables(); saveGame(); longPressActive = true; }, 500); };
+                const endPress = () => { clearTimeout(pressTimer); if (!longPressActive) { playersData[num][a.key]++; btn.textContent = `${a.label} (${playersData[num][a.key]})`; updateTables(); saveGame(); }};
                 btn.addEventListener("mousedown", e => { if (!activeTouch) startPress(); });
                 btn.addEventListener("mouseup", e => { if (!activeTouch) endPress(); });
                 btn.addEventListener("mouseleave", () => clearTimeout(pressTimer));
@@ -207,6 +236,7 @@
             playersDiv.appendChild(card);
         });
         updateTables();
+        saveGame();
     }
 
     function updateTables() {
@@ -232,51 +262,38 @@
         document.getElementById("teamStats").innerHTML = buildTable("teamTable", "Team", null, teamRow);
     }
 
-    function exportTableToExcel(tableID) {
-        const table = document.getElementById(tableID);
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.table_to_sheet(table, {raw: true});
-
-        // Überschrift einfügen
-        XLSX.utils.sheet_add_aoa(ws, [[`Statistik vs ${currentOpponent}`]], {origin: "A1"});
-
-        // Spaltenbreiten anpassen
-        ws['!cols'] = Array(table.rows[0].cells.length).fill({wch: 12});
-
-        // Trennlinie simulieren (durch extra Spalte mit Format)
-        // Excel hat keine "echten" Linien, daher hier nur optisch gleich durch Spaltenformat
-
-        XLSX.utils.book_append_sheet(wb, ws, "Stats");
-        XLSX.writeFile(wb, `${tableID}.xlsx`);
+    function saveGame() {
+        const archive = JSON.parse(localStorage.getItem("handballArchive") || "[]");
+        const existingIndex = archive.findIndex(g => g.team === currentTeam && g.opponent === currentOpponent);
+        const gameData = { team: currentTeam, opponent: currentOpponent, data: playersData };
+        if (existingIndex >= 0) archive[existingIndex] = gameData; else archive.push(gameData);
+        localStorage.setItem("handballArchive", JSON.stringify(archive));
+        loadArchive();
     }
 
-    function exportTableToPDF(tableID) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
-        doc.setFontSize(16);
-        doc.text(`Statistik vs ${currentOpponent}`, 14, 15);
-        doc.autoTable({
-            html: `#${tableID}`,
-            startY: 20,
-            theme: 'grid',
-            styles: { lineWidth: 0.2, lineColor: [0,0,0], halign: 'center', valign: 'middle' },
-            headStyles: { fillColor: [240,240,240], textColor: 0, lineWidth: 0.2, lineColor: [0,0,0] },
-            columnStyles: { [actionsPositive.length + 1]: { cellWidth: 2, fillColor: [0,0,0] } },
-            didDrawPage: () => { doc.setFontSize(10); doc.text(`Erstellt am: ${new Date().toLocaleString()}`, 14, 200); }
-        });
-        doc.save(`${tableID}.pdf`);
-    }
+    startBtn.addEventListener("click", validateAndStart);
 
-    document.querySelectorAll("button[data-export]").forEach(btn => {
-        btn.addEventListener("click", e => {
-            const type = e.target.getAttribute("data-export");
-            const table = e.target.getAttribute("data-table");
-            if (type === "excel") exportTableToExcel(table);
-            if (type === "pdf") exportTableToPDF(table);
+    document.querySelectorAll("[data-export]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const type = btn.dataset.export;
+            const tableId = btn.dataset.table;
+            if (type === "excel") exportTableToExcel(tableId);
+            else exportTableToPDF(tableId);
         });
     });
 
-    startBtn.addEventListener("click", validateAndStart);
+    function exportTableToExcel(tableId) {
+        const table = document.getElementById(tableId);
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Statistik" });
+        XLSX.writeFile(wb, `${tableId}_${currentTeam}_vs_${currentOpponent}.xlsx`);
+    }
+
+    function exportTableToPDF(tableId) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.autoTable({ html: `#${tableId}` });
+        doc.save(`${tableId}_${currentTeam}_vs_${currentOpponent}.pdf`);
+    }
 })();
 </script>
 </body>
