@@ -126,6 +126,8 @@
     const addPlayerBtn = document.getElementById("addPlayerBtn");
     const newPlayerNameInput = document.getElementById("newPlayerName");
 
+    let currentOpponent = "";
+
     const teams = {
         Fux2: ["Julian Kusche","Gabriel Kofler","Lauro Pichiri","Felix Bernkop-Schnürch","Rune Laskowski","Lucas Mohr","Navi Yatawarage","William Reichardt","Justin Wollny","Jan Grüner","Dominik Kupiec","Lennart Steltner","Luca Thiel","Tim Schröder","Jonas Kofler","Till Braren","Pius Joppich","Norman Glamann"],
         FuxA: ["Leo Nowak","Simon Poppe","Fritz Parke","Fynn Paulicks","Filip Dominikovic","Leo Tautenhahn","Antonio","Noah Skei","Simon","Albert Schmidt","Gabor Zeuch","Christopher Losch","Davide Bambini","Tillman Stark","Henning Lahuis","Ole Krake","TW3"]
@@ -166,6 +168,7 @@
             alert("Bitte korrigieren:\n- Gegner eingeben\n- Mindestens 7 Spieler auswählen");
             return;
         }
+        currentOpponent = opponent;
         startGame(opponent, selected.map(cb => parseInt(cb.value)));
     }
 
@@ -233,8 +236,16 @@
         const table = document.getElementById(tableID);
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.table_to_sheet(table, {raw: true});
+
+        // Überschrift einfügen
+        XLSX.utils.sheet_add_aoa(ws, [[`Statistik vs ${currentOpponent}`]], {origin: "A1"});
+
+        // Spaltenbreiten anpassen
         ws['!cols'] = Array(table.rows[0].cells.length).fill({wch: 12});
-        ws['!margins'] = {left:0.25, right:0.25, top:0.75, bottom:0.75};
+
+        // Trennlinie simulieren (durch extra Spalte mit Format)
+        // Excel hat keine "echten" Linien, daher hier nur optisch gleich durch Spaltenformat
+
         XLSX.utils.book_append_sheet(wb, ws, "Stats");
         XLSX.writeFile(wb, `${tableID}.xlsx`);
     }
@@ -242,20 +253,16 @@
     function exportTableToPDF(tableID) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+        doc.setFontSize(16);
+        doc.text(`Statistik vs ${currentOpponent}`, 14, 15);
         doc.autoTable({
             html: `#${tableID}`,
+            startY: 20,
             theme: 'grid',
             styles: { lineWidth: 0.2, lineColor: [0,0,0], halign: 'center', valign: 'middle' },
             headStyles: { fillColor: [240,240,240], textColor: 0, lineWidth: 0.2, lineColor: [0,0,0] },
-            bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: [0,0,0] },
-            columnStyles: { 
-                [actionsPositive.length + 1]: { lineWidth: {left: 0.8}, lineColor: {left: [0,0,0]} }, // Trennlinie
-                [actionsPositive.length + 1]: { lineWidth: {top: 0.2, right: 0.2, bottom: 0.2, left: 0.8}, lineColor: {left: [0,0,0]} }
-            },
-            didDrawPage: (data) => {
-                doc.setFontSize(10);
-                doc.text(`Erstellt am: ${new Date().toLocaleString()}`, 14, 200);
-            }
+            columnStyles: { [actionsPositive.length + 1]: { cellWidth: 2, fillColor: [0,0,0] } },
+            didDrawPage: () => { doc.setFontSize(10); doc.text(`Erstellt am: ${new Date().toLocaleString()}`, 14, 200); }
         });
         doc.save(`${tableID}.pdf`);
     }
